@@ -1,0 +1,2326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi agenda Universitaria</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --primary: #1a4d2e;
+      --primary-light: #2d6a4f;
+      --secondary: #8b4513;
+      --background: #faf8f5;
+      --surface: #ffffff;
+      --text: #2c2c2c;
+      --text-muted: #6b6b6b;
+      --border: #d4cfc4;
+      --accent: #c17817;
+      --warning: #d97706;
+      --error: #dc2626;
+      --success: #059669;
+      
+      --serif: 'Crimson Pro', serif;
+      --sans: 'IBM Plex Sans', sans-serif;
+      
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    body {
+      font-family: var(--sans);
+      background: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    h1, h2, h3, h4 {
+      font-family: var(--serif);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    
+    .app-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    
+    /* Header */
+    .app-header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--primary);
+      padding: 1.5rem 0;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .app-title {
+      font-size: 2rem;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    
+    /* Búsqueda global */
+    .search-bar {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      margin: 1rem 0;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    /* Botones */
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-light);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 2px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+      border-color: var(--primary);
+      background: var(--background);
+    }
+    
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid var(--border);
+      overflow-x: auto;
+    }
+    
+    .tab {
+      padding: 1rem 1.5rem;
+      background: none;
+      border: none;
+      font-family: var(--serif);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    
+    .tab:hover {
+      color: var(--primary);
+    }
+    
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+    
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+      animation: fadeIn 0.2s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .modal {
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: slideUp 0.3s;
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 0.25rem 0.5rem;
+      line-height: 1;
+    }
+    
+    .modal-close:hover {
+      color: var(--text);
+    }
+    
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    .modal-footer {
+      padding: 1.5rem;
+      border-top: 2px solid var(--border);
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+    }
+    
+    /* Stepper */
+    .stepper {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    
+    .stepper::before {
+      content: '';
+      position: absolute;
+      top: 20px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--border);
+      z-index: 0;
+    }
+    
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+      z-index: 1;
+      flex: 1;
+    }
+    
+    .step-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all 0.3s;
+    }
+    
+    .step.active .step-number {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    .step.completed .step-number {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
+    }
+    
+    .step-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    
+    .step.active .step-label {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    /* Form */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+    
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .form-checkbox {
+      margin-right: 0.5rem;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    
+    /* Vista Semana */
+    .week-view {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-md);
+    }
+    
+    .week-grid {
+      display: grid;
+      grid-template-columns: 80px repeat(7, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .week-header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem 0.5rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .week-header:first-child {
+      background: var(--surface);
+      color: var(--text);
+    }
+    
+    .time-cell {
+      background: var(--surface);
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-right: 1px solid var(--border);
+    }
+    
+    .day-cell {
+      background: var(--surface);
+      padding: 0.5rem;
+      min-height: 60px;
+      position: relative;
+    }
+    
+    .session-block {
+      background: var(--primary-light);
+      color: white;
+      padding: 0.5rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 3px solid var(--primary);
+    }
+    
+    .session-block:hover {
+      transform: scale(1.02);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .session-block.teoria {
+      background: linear-gradient(135deg, #2d6a4f 0%, #1a4d2e 100%);
+    }
+    
+    .session-block.practico {
+      background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+    }
+    
+    .session-block.practica {
+      background: linear-gradient(135deg, #c17817 0%, #996515 100%);
+    }
+    
+    .session-name {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .session-time {
+      font-size: 0.75rem;
+      opacity: 0.9;
+    }
+    
+    /* Vista Mes */
+    .month-view {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-md);
+    }
+    
+    .month-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .month-title {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+    
+    .month-nav {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .month-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .month-day-header {
+      background: var(--primary);
+      color: white;
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .month-day {
+      background: var(--surface);
+      padding: 0.5rem;
+      min-height: 100px;
+      max-height: 120px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .month-day:hover {
+      background: var(--background);
+    }
+    
+    .month-day.other-month {
+      opacity: 0.4;
+    }
+    
+    .month-day-number {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    
+    .month-day-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: inline-block;
+      margin: 2px;
+    }
+    
+    .month-event {
+      background: var(--accent);
+      color: white;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      margin-top: 0.25rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+    
+    /* Vista Lista */
+    .list-view {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-md);
+    }
+    
+    .list-filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .list-item {
+      padding: 1rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .list-item:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .list-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 0.5rem;
+    }
+    
+    .list-item-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--primary);
+      font-family: var(--serif);
+    }
+    
+    .list-item-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .badge-teoria {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .badge-practico {
+      background: #fff3cd;
+      color: #856404;
+    }
+    
+    .badge-examen {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .list-item-details {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+    
+    /* Vista Estadísticas */
+    .stats-view {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .stat-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-md);
+      border-top: 4px solid var(--primary);
+    }
+    
+    .stat-title {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      font-family: var(--serif);
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    
+    .stat-list {
+      margin-top: 1rem;
+    }
+    
+    .stat-list-item {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .stat-list-item:last-child {
+      border-bottom: none;
+    }
+    
+    /* Panel lateral */
+    .side-panel {
+      position: fixed;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 400px;
+      max-width: 90vw;
+      background: var(--surface);
+      box-shadow: var(--shadow-lg);
+      transform: translateX(100%);
+      transition: transform 0.3s;
+      z-index: 999;
+      overflow-y: auto;
+    }
+    
+    .side-panel.open {
+      transform: translateX(0);
+    }
+    
+    .side-panel-header {
+      padding: 1.5rem;
+      border-bottom: 2px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      z-index: 1;
+    }
+    
+    .side-panel-body {
+      padding: 1.5rem;
+    }
+    
+    .side-panel-section {
+      margin-bottom: 2rem;
+    }
+    
+    .side-panel-section-title {
+      font-size: 1.1rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      font-family: var(--serif);
+    }
+    
+    /* Alertas */
+    .alert {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: start;
+    }
+    
+    .alert-warning {
+      background: #fef3c7;
+      color: #92400e;
+      border-left: 4px solid var(--warning);
+    }
+    
+    .alert-error {
+      background: #fee2e2;
+      color: #991b1b;
+      border-left: 4px solid var(--error);
+    }
+    
+    .alert-info {
+      background: #dbeafe;
+      color: #1e40af;
+      border-left: 4px solid var(--primary);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .app-title {
+        font-size: 1.5rem;
+      }
+      
+      .week-grid {
+        grid-template-columns: 60px repeat(7, 1fr);
+        font-size: 0.8rem;
+      }
+      
+      .month-grid {
+        gap: 2px;
+      }
+      
+      .month-day {
+        min-height: 70px;
+        max-height: 90px;
+        padding: 0.25rem;
+      }
+      
+      .stats-view {
+        grid-template-columns: 1fr;
+      }
+      
+      .modal {
+        margin: 0;
+        border-radius: 0;
+        max-height: 100vh;
+      }
+    }
+    
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+    
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    .item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .item-entry {
+      padding: 0.75rem;
+      background: var(--background);
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .item-entry-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .btn-sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+    }
+    
+    .btn-danger {
+      background: var(--error);
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // ============ TIPOS Y MODELO DE DATOS ============
+    
+    // Modelo normalizado
+    const createEmptyTerm = () => ({
+      id: 'term-1',
+      nombre: 'Cuatrimestre 1 2025',
+      startDate: '2025-03-10',
+      endDate: '2025-07-11',
+      timezone: 'America/Argentina/Buenos_Aires'
+    });
+
+    const createEmptyCourse = () => ({
+      id: `course-${Date.now()}`,
+      nombre: '',
+      email: '',
+      reunionDia: null,
+      reunionHora: null,
+      notas: ''
+    });
+
+    const createEmptyWeeklySession = () => ({
+      id: `session-${Date.now()}`,
+      termId: 'term-1',
+      courseId: '',
+      modalidad: 'teoria',
+      dayOfWeek: 1,
+      startTime: '08:00',
+      endTime: '10:00',
+      docente: '',
+      aula: '',
+      obligatoria: true,
+      numeroComision: ''
+    });
+
+    const createEmptyEvent = () => ({
+      id: `event-${Date.now()}`,
+      termId: 'term-1',
+      courseId: '',
+      eventualType: 'examen',
+      examType: 'Parcial',
+      dateISO: new Date().toISOString(),
+      notes: '',
+      status: 'confirmed'
+    });
+
+    // ============ UTILIDADES ============
+    
+    const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const DAYS_FULL = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+    function getDayName(dayNum) {
+      return DAYS_FULL[dayNum - 1] || '';
+    }
+
+    function formatTime(time) {
+      return time ? time.substring(0, 5) : '';
+    }
+
+    function parseTime(timeStr) {
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function getMonthName(month) {
+      const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      return months[month];
+    }
+
+    function getDaysInMonth(year, month) {
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function getFirstDayOfMonth(year, month) {
+      const day = new Date(year, month, 1).getDay();
+      return day === 0 ? 7 : day; // Convertir domingo de 0 a 7
+    }
+
+    function isSameDay(date1, date2) {
+      return date1.getFullYear() === date2.getFullYear() &&
+             date1.getMonth() === date2.getMonth() &&
+             date1.getDate() === date2.getDate();
+    }
+
+    // Generar ocurrencias de una sesión semanal
+    function generateSessionOccurrences(session, term) {
+      const occurrences = [];
+      const start = new Date(term.startDate);
+      const end = new Date(term.endDate);
+      
+      let current = new Date(start);
+      
+      // Avanzar hasta el primer día que coincida
+      while (current <= end) {
+        const currentDay = current.getDay() === 0 ? 7 : current.getDay();
+        if (currentDay === session.dayOfWeek) {
+          occurrences.push(new Date(current));
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      
+      return occurrences;
+    }
+
+    // Detectar conflictos
+    function detectConflicts(sessions, courses) {
+      const conflicts = [];
+      
+      for (let i = 0; i < sessions.length; i++) {
+        for (let j = i + 1; j < sessions.length; j++) {
+          const s1 = sessions[i];
+          const s2 = sessions[j];
+          
+          if (s1.dayOfWeek === s2.dayOfWeek) {
+            const start1 = parseTime(s1.startTime);
+            const end1 = parseTime(s1.endTime);
+            const start2 = parseTime(s2.startTime);
+            const end2 = parseTime(s2.endTime);
+            
+            // Superposición
+            if (start1 < end2 && start2 < end1) {
+              const course1 = courses.find(c => c.id === s1.courseId);
+              const course2 = courses.find(c => c.id === s2.courseId);
+              
+              conflicts.push({
+                type: 'overlap',
+                session1: { ...s1, courseName: course1?.nombre },
+                session2: { ...s2, courseName: course2?.nombre }
+              });
+            }
+            // Clases pegadas (gap = 0)
+            else if (end1 === start2 || end2 === start1) {
+              const course1 = courses.find(c => c.id === s1.courseId);
+              const course2 = courses.find(c => c.id === s2.courseId);
+              
+              conflicts.push({
+                type: 'no-gap',
+                session1: { ...s1, courseName: course1?.nombre },
+                session2: { ...s2, courseName: course2?.nombre }
+              });
+            }
+          }
+        }
+      }
+      
+      return conflicts;
+    }
+
+    // ============ IMPORTACIÓN LEGADO ============
+    
+    function importLegacyData(legacyArray) {
+      const courses = [];
+      const weeklySessions = [];
+      const events = [];
+      const courseMap = new Map();
+      
+      legacyArray.forEach(item => {
+        if (item.type === 'habitual') {
+          // Buscar o crear curso
+          let course = courseMap.get(item.catedra);
+          if (!course) {
+            course = {
+              id: `course-${Date.now()}-${Math.random()}`,
+              nombre: item.catedra || item.category,
+              email: item.contact || '',
+              notas: ''
+            };
+            courseMap.set(item.catedra, course);
+            courses.push(course);
+          }
+          
+          // Crear sesión semanal
+          const session = {
+            id: item.id || `session-${Date.now()}-${Math.random()}`,
+            termId: 'term-1',
+            courseId: course.id,
+            modalidad: item.modalidad || 'teoria',
+            dayOfWeek: item.dayOfWeek || 1,
+            startTime: item.startTime || '08:00',
+            endTime: item.endTime || '10:00',
+            docente: item.docente || '',
+            aula: item.aula || '',
+            obligatoria: item.obligatoria !== false,
+            numeroComision: item.detail || ''
+          };
+          weeklySessions.push(session);
+          
+        } else if (item.type === 'eventual' && item.eventualType === 'examen') {
+          // Buscar o crear curso
+          let course = courseMap.get(item.subject);
+          if (!course) {
+            course = {
+              id: `course-${Date.now()}-${Math.random()}`,
+              nombre: item.subject,
+              email: '',
+              notas: ''
+            };
+            courseMap.set(item.subject, course);
+            courses.push(course);
+          }
+          
+          // Crear evento
+          const event = {
+            id: item.id || `event-${Date.now()}-${Math.random()}`,
+            termId: 'term-1',
+            courseId: course.id,
+            eventualType: 'examen',
+            examType: item.examType || 'Parcial',
+            dateISO: item.examDate || item.date,
+            notes: item.detail || '',
+            status: item.status || 'confirmed'
+          };
+          events.push(event);
+        }
+      });
+      
+      return { courses, weeklySessions, events };
+    }
+
+    // Exportar a formato legado
+    function exportToLegacyFormat(data) {
+      const { term, courses, weeklySessions, events } = data;
+      const legacy = [];
+      
+      weeklySessions.forEach(session => {
+        const course = courses.find(c => c.id === session.courseId);
+        legacy.push({
+          type: 'habitual',
+          id: session.id,
+          category: course?.nombre || '',
+          detail: session.numeroComision,
+          dayOfWeek: session.dayOfWeek,
+          startTime: session.startTime,
+          endTime: session.endTime,
+          contact: course?.email || '',
+          modalidad: session.modalidad,
+          catedra: course?.nombre || '',
+          docente: session.docente,
+          aula: session.aula,
+          obligatoria: session.obligatoria,
+          fechaInicioTeoria: term.startDate,
+          fechaFinTeoria: term.endDate
+        });
+      });
+      
+      events.forEach(event => {
+        const course = courses.find(c => c.id === event.courseId);
+        legacy.push({
+          type: 'eventual',
+          id: event.id,
+          eventualType: event.eventualType,
+          subject: course?.nombre || '',
+          examType: event.examType,
+          examDate: event.dateISO,
+          date: event.dateISO,
+          detail: event.notes,
+          status: event.status
+        });
+      });
+      
+      return legacy;
+    }
+
+    // ============ DATOS DEMO ============
+    
+    function getDemoData() {
+      const term = createEmptyTerm();
+      
+      const courses = [
+        { id: 'c1', nombre: 'Análisis Matemático I', email: 'analisis@fi.uba.ar', notas: 'Cátedra Fernández' },
+        { id: 'c2', nombre: 'Álgebra y Geometría Analítica', email: 'algebra@fi.uba.ar', notas: '' },
+        { id: 'c3', nombre: 'Química', email: 'quimica@fi.uba.ar', notas: '' },
+        { id: 'c4', nombre: 'Física I', email: 'fisica@fi.uba.ar', notas: 'Cátedra López' }
+      ];
+      
+      const weeklySessions = [
+        { id: 's1', termId: 'term-1', courseId: 'c1', modalidad: 'teoria', dayOfWeek: 1, startTime: '08:00', endTime: '11:00', docente: 'Prof. Fernández', aula: 'Aula 203', obligatoria: true, numeroComision: 'Comisión 1' },
+        { id: 's2', termId: 'term-1', courseId: 'c1', modalidad: 'practico', dayOfWeek: 3, startTime: '14:00', endTime: '17:00', docente: 'Aux. García', aula: 'Lab 5', obligatoria: true, numeroComision: 'Comisión 1A' },
+        { id: 's3', termId: 'term-1', courseId: 'c2', modalidad: 'teoria', dayOfWeek: 2, startTime: '09:00', endTime: '12:00', docente: 'Prof. Martínez', aula: 'Aula 105', obligatoria: true, numeroComision: '' },
+        { id: 's4', termId: 'term-1', courseId: 'c2', modalidad: 'practico', dayOfWeek: 4, startTime: '15:00', endTime: '18:00', docente: 'Aux. Rodríguez', aula: 'Lab 3', obligatoria: true, numeroComision: 'Grupo 2' },
+        { id: 's5', termId: 'term-1', courseId: 'c3', modalidad: 'teoria', dayOfWeek: 1, startTime: '14:00', endTime: '16:00', docente: 'Prof. Silva', aula: 'Aula 301', obligatoria: false, numeroComision: '' },
+        { id: 's6', termId: 'term-1', courseId: 'c3', modalidad: 'practica', dayOfWeek: 5, startTime: '10:00', endTime: '13:00', docente: 'Aux. Torres', aula: 'Lab Química', obligatoria: true, numeroComision: 'Grupo A' },
+        { id: 's7', termId: 'term-1', courseId: 'c4', modalidad: 'teoria', dayOfWeek: 3, startTime: '08:00', endTime: '10:00', docente: 'Prof. López', aula: 'Anfiteatro', obligatoria: true, numeroComision: '' },
+        { id: 's8', termId: 'term-1', courseId: 'c4', modalidad: 'practico', dayOfWeek: 5, startTime: '14:00', endTime: '17:00', docente: 'Aux. Pérez', aula: 'Lab Física', obligatoria: true, numeroComision: 'Comisión 3' }
+      ];
+      
+      const events = [
+        { id: 'e1', termId: 'term-1', courseId: 'c1', eventualType: 'examen', examType: 'Primer Parcial', dateISO: '2025-04-22T03:00:00.000Z', notes: 'Temas 1-4', status: 'confirmed' },
+        { id: 'e2', termId: 'term-1', courseId: 'c2', eventualType: 'examen', examType: 'Primer Parcial', dateISO: '2025-04-25T03:00:00.000Z', notes: '', status: 'confirmed' },
+        { id: 'e3', termId: 'term-1', courseId: 'c1', eventualType: 'entrega', examType: 'TP Integrador', dateISO: '2025-05-15T03:00:00.000Z', notes: 'Trabajo práctico grupal', status: 'confirmed' },
+        { id: 'e4', termId: 'term-1', courseId: 'c3', eventualType: 'examen', examType: 'Primer Parcial', dateISO: '2025-05-02T03:00:00.000Z', notes: '', status: 'confirmed' }
+      ];
+      
+      return { term, courses, weeklySessions, events };
+    }
+
+    // ============ STORAGE ============
+    
+    function saveToStorage(data) {
+      localStorage.setItem('miAgendaUniversitaria', JSON.stringify(data));
+    }
+
+    function loadFromStorage() {
+      const stored = localStorage.getItem('miAgendaUniversitaria');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          console.error('Error al cargar datos:', e);
+        }
+      }
+      return getDemoData();
+    }
+
+    // ============ COMPONENTES ============
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('semana');
+      const [showModal, setShowModal] = useState(false);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedItem, setSelectedItem] = useState(null);
+      const [showSidePanel, setShowSidePanel] = useState(false);
+      
+      const [data, setData] = useState(() => loadFromStorage());
+      const { term, courses, weeklySessions, events } = data;
+
+      // Guardar automáticamente
+      useEffect(() => {
+        saveToStorage(data);
+      }, [data]);
+
+      const conflicts = useMemo(() => {
+        return detectConflicts(weeklySessions, courses);
+      }, [weeklySessions, courses]);
+
+      const handleExport = (format = 'normalized') => {
+        let exportData;
+        if (format === 'legacy') {
+          exportData = exportToLegacyFormat(data);
+        } else {
+          exportData = data;
+        }
+        
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `agenda-universitaria-${format}.json`;
+        a.click();
+      };
+
+      const handleImport = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const imported = JSON.parse(event.target.result);
+            
+            // Detectar formato
+            if (Array.isArray(imported)) {
+              // Formato legado
+              const converted = importLegacyData(imported);
+              setData({
+                term: createEmptyTerm(),
+                courses: converted.courses,
+                weeklySessions: converted.weeklySessions,
+                events: converted.events
+              });
+            } else if (imported.term && imported.courses) {
+              // Formato normalizado
+              setData(imported);
+            } else {
+              alert('Formato de archivo no reconocido');
+            }
+          } catch (err) {
+            alert('Error al importar: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      const handleOpenItem = (item, type) => {
+        setSelectedItem({ ...item, type });
+        setShowSidePanel(true);
+      };
+
+      return (
+        <div className="app-container">
+          <header className="app-header">
+            <div className="app-container">
+              <div className="header-content">
+                <h1 className="app-title">Mi agenda Universitaria</h1>
+                <div className="header-actions">
+                  <button className="btn btn-secondary" onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = handleImport;
+                    input.click();
+                  }}>
+                    Importar JSON
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => handleExport('normalized')}>
+                    Exportar
+                  </button>
+                  <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                    Agregar / Editar datos
+                  </button>
+                </div>
+              </div>
+              
+              <div className="search-bar">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Buscar por materia, docente, aula, comisión..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+          </header>
+
+          {conflicts.length > 0 && (
+            <div className="app-container">
+              <div className="alert alert-warning">
+                <strong>⚠️</strong>
+                <div>
+                  <strong>Conflictos detectados:</strong>
+                  <ul style={{ marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
+                    {conflicts.slice(0, 3).map((c, i) => (
+                      <li key={i}>
+                        {c.type === 'overlap' ? 'Superposición' : 'Clases pegadas'}: 
+                        {' '}{c.session1.courseName} y {c.session2.courseName} el {getDayName(c.session1.dayOfWeek)}
+                      </li>
+                    ))}
+                  </ul>
+                  {conflicts.length > 3 && <div>Y {conflicts.length - 3} más...</div>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="app-container">
+            <div className="tabs">
+              <button
+                className={`tab ${activeTab === 'semana' ? 'active' : ''}`}
+                onClick={() => setActiveTab('semana')}
+              >
+                Semana
+              </button>
+              <button
+                className={`tab ${activeTab === 'mes' ? 'active' : ''}`}
+                onClick={() => setActiveTab('mes')}
+              >
+                Mes
+              </button>
+              <button
+                className={`tab ${activeTab === 'lista' ? 'active' : ''}`}
+                onClick={() => setActiveTab('lista')}
+              >
+                Lista
+              </button>
+              <button
+                className={`tab ${activeTab === 'estadisticas' ? 'active' : ''}`}
+                onClick={() => setActiveTab('estadisticas')}
+              >
+                Estadísticas
+              </button>
+            </div>
+
+            {activeTab === 'semana' && (
+              <WeekView
+                sessions={weeklySessions}
+                courses={courses}
+                searchQuery={searchQuery}
+                onOpenItem={handleOpenItem}
+              />
+            )}
+            
+            {activeTab === 'mes' && (
+              <MonthView
+                sessions={weeklySessions}
+                events={events}
+                courses={courses}
+                term={term}
+                searchQuery={searchQuery}
+                onOpenItem={handleOpenItem}
+              />
+            )}
+            
+            {activeTab === 'lista' && (
+              <ListView
+                sessions={weeklySessions}
+                events={events}
+                courses={courses}
+                searchQuery={searchQuery}
+                onOpenItem={handleOpenItem}
+              />
+            )}
+            
+            {activeTab === 'estadisticas' && (
+              <StatsView
+                sessions={weeklySessions}
+                events={events}
+                courses={courses}
+                term={term}
+              />
+            )}
+          </div>
+
+          {showModal && (
+            <DataModal
+              data={data}
+              onSave={(newData) => {
+                setData(newData);
+                setShowModal(false);
+              }}
+              onClose={() => setShowModal(false)}
+            />
+          )}
+
+          {showSidePanel && (
+            <SidePanel
+              item={selectedItem}
+              courses={courses}
+              sessions={weeklySessions}
+              events={events}
+              onClose={() => setShowSidePanel(false)}
+            />
+          )}
+        </div>
+      );
+    }
+
+    // ============ VISTA SEMANA ============
+    
+    function WeekView({ sessions, courses, searchQuery, onOpenItem }) {
+      const hours = Array.from({ length: 15 }, (_, i) => 8 + i); // 8:00 a 22:00
+
+      const filteredSessions = sessions.filter(s => {
+        if (!searchQuery) return true;
+        const course = courses.find(c => c.id === s.courseId);
+        const q = searchQuery.toLowerCase();
+        return (
+          course?.nombre.toLowerCase().includes(q) ||
+          s.docente?.toLowerCase().includes(q) ||
+          s.aula?.toLowerCase().includes(q) ||
+          s.numeroComision?.toLowerCase().includes(q) ||
+          s.modalidad.toLowerCase().includes(q)
+        );
+      });
+
+      const getSessionsForDayHour = (day, hour) => {
+        return filteredSessions.filter(s => {
+          if (s.dayOfWeek !== day) return false;
+          const startHour = parseInt(s.startTime.split(':')[0]);
+          return startHour === hour;
+        });
+      };
+
+      return (
+        <div className="week-view">
+          <div className="week-grid">
+            <div className="week-header">Hora</div>
+            {DAYS.map((day, idx) => (
+              <div key={day} className="week-header">{day}</div>
+            ))}
+            
+            {hours.map(hour => (
+              <React.Fragment key={hour}>
+                <div className="time-cell">{hour}:00</div>
+                {[1, 2, 3, 4, 5, 6, 7].map(day => {
+                  const daySessions = getSessionsForDayHour(day, hour);
+                  return (
+                    <div key={`${hour}-${day}`} className="day-cell">
+                      {daySessions.map(session => {
+                        const course = courses.find(c => c.id === session.courseId);
+                        return (
+                          <div
+                            key={session.id}
+                            className={`session-block ${session.modalidad}`}
+                            onClick={() => onOpenItem(course, 'course')}
+                          >
+                            <div className="session-name">{course?.nombre}</div>
+                            <div className="session-time">
+                              {formatTime(session.startTime)} - {formatTime(session.endTime)}
+                            </div>
+                            {session.aula && <div className="session-time">{session.aula}</div>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ============ VISTA MES ============
+    
+    function MonthView({ sessions, events, courses, term, searchQuery, onOpenItem }) {
+      const [currentDate, setCurrentDate] = useState(new Date());
+      
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      
+      const daysInMonth = getDaysInMonth(year, month);
+      const firstDay = getFirstDayOfMonth(year, month);
+      
+      const prevMonth = () => {
+        setCurrentDate(new Date(year, month - 1, 1));
+      };
+      
+      const nextMonth = () => {
+        setCurrentDate(new Date(year, month + 1, 1));
+      };
+
+      const getSessionsForDate = (date) => {
+        const dayOfWeek = date.getDay() === 0 ? 7 : date.getDay();
+        return sessions.filter(s => {
+          if (s.dayOfWeek !== dayOfWeek) return false;
+          
+          // Verificar que está dentro del período
+          const termStart = new Date(term.startDate);
+          const termEnd = new Date(term.endDate);
+          return date >= termStart && date <= termEnd;
+        });
+      };
+
+      const getEventsForDate = (date) => {
+        return events.filter(e => {
+          const eventDate = new Date(e.dateISO);
+          return isSameDay(eventDate, date);
+        });
+      };
+
+      const days = [];
+      
+      // Días del mes anterior
+      const prevMonthDays = getDaysInMonth(year, month - 1);
+      for (let i = firstDay - 2; i >= 0; i--) {
+        days.push({
+          day: prevMonthDays - i,
+          isCurrentMonth: false,
+          date: new Date(year, month - 1, prevMonthDays - i)
+        });
+      }
+      
+      // Días del mes actual
+      for (let i = 1; i <= daysInMonth; i++) {
+        days.push({
+          day: i,
+          isCurrentMonth: true,
+          date: new Date(year, month, i)
+        });
+      }
+      
+      // Días del mes siguiente
+      const remaining = 42 - days.length; // 6 semanas
+      for (let i = 1; i <= remaining; i++) {
+        days.push({
+          day: i,
+          isCurrentMonth: false,
+          date: new Date(year, month + 1, i)
+        });
+      }
+
+      return (
+        <div className="month-view">
+          <div className="month-header">
+            <h2 className="month-title">{getMonthName(month)} {year}</h2>
+            <div className="month-nav">
+              <button className="btn btn-secondary btn-sm" onClick={prevMonth}>← Anterior</button>
+              <button className="btn btn-secondary btn-sm" onClick={nextMonth}>Siguiente →</button>
+            </div>
+          </div>
+          
+          <div className="month-grid">
+            {DAYS.map(day => (
+              <div key={day} className="month-day-header">{day}</div>
+            ))}
+            
+            {days.map((dayInfo, idx) => {
+              const daySessions = getSessionsForDate(dayInfo.date);
+              const dayEvents = getEventsForDate(dayInfo.date);
+              
+              return (
+                <div
+                  key={idx}
+                  className={`month-day ${!dayInfo.isCurrentMonth ? 'other-month' : ''}`}
+                >
+                  <div className="month-day-number">{dayInfo.day}</div>
+                  
+                  {daySessions.length > 0 && (
+                    <div>
+                      {daySessions.slice(0, 2).map((s, i) => (
+                        <span key={i} className="month-day-indicator"></span>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {dayEvents.slice(0, 2).map(event => {
+                    const course = courses.find(c => c.id === event.courseId);
+                    // Abreviar el nombre de la materia si es muy largo
+                    const courseName = course?.nombre || '';
+                    const shortName = courseName.length > 15 ? courseName.substring(0, 12) + '...' : courseName;
+                    
+                    return (
+                      <div
+                        key={event.id}
+                        className="month-event"
+                        onClick={() => onOpenItem(event, 'event')}
+                        title={`${courseName} - ${event.examType}`}
+                      >
+                        {shortName}
+                      </div>
+                    );
+                  })}
+                  {dayEvents.length > 2 && (
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem', fontWeight: 500 }}>
+                      +{dayEvents.length - 2} más
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // ============ VISTA LISTA ============
+    
+    function ListView({ sessions, events, courses, searchQuery, onOpenItem }) {
+      const [filter, setFilter] = useState('todos');
+
+      const allItems = useMemo(() => {
+        const items = [];
+        
+        // Agrupar sesiones por materia
+        const sessionsByCourse = new Map();
+        sessions.forEach(s => {
+          if (!sessionsByCourse.has(s.courseId)) {
+            sessionsByCourse.set(s.courseId, []);
+          }
+          sessionsByCourse.get(s.courseId).push(s);
+        });
+        
+        sessionsByCourse.forEach((courseSessions, courseId) => {
+          const course = courses.find(c => c.id === courseId);
+          courseSessions.forEach(session => {
+            items.push({
+              type: 'session',
+              id: session.id,
+              courseId: courseId,
+              courseName: course?.nombre || '',
+              modalidad: session.modalidad,
+              day: getDayName(session.dayOfWeek),
+              time: `${formatTime(session.startTime)} - ${formatTime(session.endTime)}`,
+              aula: session.aula,
+              docente: session.docente,
+              comision: session.numeroComision,
+              data: session
+            });
+          });
+        });
+        
+        // Agregar eventos
+        events.forEach(event => {
+          const course = courses.find(c => c.id === event.courseId);
+          const date = new Date(event.dateISO);
+          items.push({
+            type: 'event',
+            id: event.id,
+            courseId: event.courseId,
+            courseName: course?.nombre || '',
+            eventType: event.eventualType,
+            examType: event.examType,
+            date: date.toLocaleDateString('es-AR'),
+            notes: event.notes,
+            data: event
+          });
+        });
+        
+        return items;
+      }, [sessions, events, courses]);
+
+      const filteredItems = allItems.filter(item => {
+        // Filtro por tipo
+        if (filter === 'clases' && item.type !== 'session') return false;
+        if (filter === 'examenes' && item.type !== 'event') return false;
+        
+        // Filtro por búsqueda
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          return (
+            item.courseName.toLowerCase().includes(q) ||
+            item.docente?.toLowerCase().includes(q) ||
+            item.aula?.toLowerCase().includes(q) ||
+            item.comision?.toLowerCase().includes(q) ||
+            item.modalidad?.toLowerCase().includes(q) ||
+            item.examType?.toLowerCase().includes(q)
+          );
+        }
+        
+        return true;
+      });
+
+      return (
+        <div className="list-view">
+          <div className="list-filters">
+            <button
+              className={`btn ${filter === 'todos' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+              onClick={() => setFilter('todos')}
+            >
+              Todos
+            </button>
+            <button
+              className={`btn ${filter === 'clases' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+              onClick={() => setFilter('clases')}
+            >
+              Clases
+            </button>
+            <button
+              className={`btn ${filter === 'examenes' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+              onClick={() => setFilter('examenes')}
+            >
+              Exámenes
+            </button>
+          </div>
+
+          {filteredItems.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">📚</div>
+              <p>No se encontraron resultados</p>
+            </div>
+          ) : (
+            filteredItems.map(item => (
+              <div
+                key={item.id}
+                className="list-item"
+                onClick={() => {
+                  const course = courses.find(c => c.id === item.courseId);
+                  onOpenItem(course, 'course');
+                }}
+              >
+                <div className="list-item-header">
+                  <div className="list-item-title">{item.courseName}</div>
+                  {item.type === 'session' && (
+                    <span className={`list-item-badge badge-${item.modalidad}`}>
+                      {item.modalidad}
+                    </span>
+                  )}
+                  {item.type === 'event' && (
+                    <span className="list-item-badge badge-examen">
+                      {item.examType}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="list-item-details">
+                  {item.type === 'session' && (
+                    <>
+                      {item.day} • {item.time}
+                      {item.aula && ` • ${item.aula}`}
+                      {item.docente && ` • ${item.docente}`}
+                      {item.comision && ` • ${item.comision}`}
+                    </>
+                  )}
+                  {item.type === 'event' && (
+                    <>
+                      {item.date}
+                      {item.notes && ` • ${item.notes}`}
+                    </>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      );
+    }
+
+    // ============ VISTA ESTADÍSTICAS ============
+    
+    function StatsView({ sessions, events, courses, term }) {
+      const stats = useMemo(() => {
+        const totalCourses = courses.length;
+        
+        // Calcular total de clases
+        let totalClasses = 0;
+        sessions.forEach(session => {
+          const occurrences = generateSessionOccurrences(session, term);
+          totalClasses += occurrences.length;
+        });
+        
+        // Estadísticas por materia
+        const courseStats = courses.map(course => {
+          const courseSessions = sessions.filter(s => s.courseId === course.id);
+          const courseEvents = events.filter(e => e.courseId === course.id);
+          
+          let totalSessionOccurrences = 0;
+          courseSessions.forEach(session => {
+            const occurrences = generateSessionOccurrences(session, term);
+            totalSessionOccurrences += occurrences.length;
+          });
+          
+          return {
+            course,
+            totalSessions: totalSessionOccurrences,
+            sessionTypes: courseSessions.map(s => ({
+              modalidad: s.modalidad,
+              count: generateSessionOccurrences(s, term).length
+            })),
+            events: courseEvents.length
+          };
+        });
+        
+        return {
+          totalCourses,
+          totalClasses,
+          courseStats
+        };
+      }, [sessions, events, courses, term]);
+
+      return (
+        <div className="stats-view">
+          <div className="stat-card">
+            <div className="stat-title">Total Materias</div>
+            <div className="stat-value">{stats.totalCourses}</div>
+            <div className="stat-subtitle">En el {term.nombre}</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-title">Total Clases</div>
+            <div className="stat-value">{stats.totalClasses}</div>
+            <div className="stat-subtitle">
+              Del {new Date(term.startDate).toLocaleDateString('es-AR')} al{' '}
+              {new Date(term.endDate).toLocaleDateString('es-AR')}
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-title">Clases Restantes</div>
+            <div className="stat-value">{stats.totalClasses}</div>
+            <div className="stat-subtitle">Sin sistema de asistencia activo</div>
+          </div>
+          
+          <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
+            <div className="stat-title">Detalle por Materia</div>
+            <div className="stat-list">
+              {stats.courseStats.map(({ course, totalSessions, sessionTypes, events }) => (
+                <div key={course.id} className="stat-list-item">
+                  <div>
+                    <strong>{course.nombre}</strong>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                      {sessionTypes.map((st, i) => (
+                        <span key={i}>
+                          {st.modalidad}: {st.count} clases
+                          {i < sessionTypes.length - 1 ? ' • ' : ''}
+                        </span>
+                      ))}
+                      {events > 0 && ` • ${events} exámenes/entregas`}
+                    </div>
+                  </div>
+                  <div style={{ fontWeight: 600, color: 'var(--primary)' }}>
+                    {totalSessions} clases
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ============ MODAL DE DATOS ============
+    
+    function DataModal({ data, onSave, onClose }) {
+      const [step, setStep] = useState(0);
+      const [formData, setFormData] = useState(data);
+
+      const steps = ['Período', 'Materias', 'Cursadas', 'Exámenes'];
+
+      const handleNext = () => {
+        if (step < steps.length - 1) {
+          setStep(step + 1);
+        } else {
+          onSave(formData);
+        }
+      };
+
+      const handleBack = () => {
+        if (step > 0) setStep(step - 1);
+      };
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Configurar datos académicos</h2>
+              <button className="modal-close" onClick={onClose}>×</button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="stepper">
+                {steps.map((s, i) => (
+                  <div key={s} className={`step ${i === step ? 'active' : ''} ${i < step ? 'completed' : ''}`}>
+                    <div className="step-number">{i + 1}</div>
+                    <div className="step-label">{s}</div>
+                  </div>
+                ))}
+              </div>
+
+              {step === 0 && (
+                <TermStep
+                  term={formData.term}
+                  onChange={(term) => setFormData({ ...formData, term })}
+                />
+              )}
+              
+              {step === 1 && (
+                <CoursesStep
+                  courses={formData.courses}
+                  onChange={(courses) => setFormData({ ...formData, courses })}
+                />
+              )}
+              
+              {step === 2 && (
+                <SessionsStep
+                  sessions={formData.weeklySessions}
+                  courses={formData.courses}
+                  onChange={(sessions) => setFormData({ ...formData, weeklySessions: sessions })}
+                />
+              )}
+              
+              {step === 3 && (
+                <EventsStep
+                  events={formData.events}
+                  courses={formData.courses}
+                  onChange={(events) => setFormData({ ...formData, events })}
+                />
+              )}
+            </div>
+            
+            <div className="modal-footer">
+              {step > 0 && (
+                <button className="btn btn-secondary" onClick={handleBack}>
+                  Atrás
+                </button>
+              )}
+              <button className="btn btn-primary" onClick={handleNext}>
+                {step === steps.length - 1 ? 'Guardar' : 'Siguiente'}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function TermStep({ term, onChange }) {
+      return (
+        <div>
+          <div className="form-group">
+            <label className="form-label">Nombre del período</label>
+            <input
+              type="text"
+              className="form-input"
+              value={term.nombre}
+              onChange={(e) => onChange({ ...term, nombre: e.target.value })}
+            />
+          </div>
+          
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Fecha de inicio</label>
+              <input
+                type="date"
+                className="form-input"
+                value={term.startDate}
+                onChange={(e) => onChange({ ...term, startDate: e.target.value })}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Fecha de fin</label>
+              <input
+                type="date"
+                className="form-input"
+                value={term.endDate}
+                onChange={(e) => onChange({ ...term, endDate: e.target.value })}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function CoursesStep({ courses, onChange }) {
+      const handleAdd = () => {
+        onChange([...courses, createEmptyCourse()]);
+      };
+
+      const handleRemove = (index) => {
+        onChange(courses.filter((_, i) => i !== index));
+      };
+
+      const handleChange = (index, field, value) => {
+        const updated = [...courses];
+        updated[index] = { ...updated[index], [field]: value };
+        onChange(updated);
+      };
+
+      return (
+        <div>
+          <div className="item-list">
+            {courses.map((course, index) => (
+              <div key={course.id} className="item-entry">
+                <div style={{ flex: 1 }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Nombre de la materia"
+                    value={course.nombre}
+                    onChange={(e) => handleChange(index, 'nombre', e.target.value)}
+                    style={{ marginBottom: '0.5rem' }}
+                  />
+                  <input
+                    type="email"
+                    className="form-input"
+                    placeholder="Email de contacto"
+                    value={course.email}
+                    onChange={(e) => handleChange(index, 'email', e.target.value)}
+                  />
+                </div>
+                <div className="item-entry-actions">
+                  <button className="btn btn-danger btn-sm" onClick={() => handleRemove(index)}>
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <button className="btn btn-secondary" onClick={handleAdd} style={{ marginTop: '1rem' }}>
+            + Agregar materia
+          </button>
+        </div>
+      );
+    }
+
+    function SessionsStep({ sessions, courses, onChange }) {
+      const handleAdd = () => {
+        onChange([...sessions, createEmptyWeeklySession()]);
+      };
+
+      const handleRemove = (index) => {
+        onChange(sessions.filter((_, i) => i !== index));
+      };
+
+      const handleChange = (index, field, value) => {
+        const updated = [...sessions];
+        updated[index] = { ...updated[index], [field]: value };
+        onChange(updated);
+      };
+
+      return (
+        <div>
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            {sessions.map((session, index) => (
+              <div key={session.id} style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--background)', borderRadius: '8px' }}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Materia</label>
+                    <select
+                      className="form-select"
+                      value={session.courseId}
+                      onChange={(e) => handleChange(index, 'courseId', e.target.value)}
+                    >
+                      <option value="">Seleccionar...</option>
+                      {courses.map(c => (
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Modalidad</label>
+                    <select
+                      className="form-select"
+                      value={session.modalidad}
+                      onChange={(e) => handleChange(index, 'modalidad', e.target.value)}
+                    >
+                      <option value="teoria">Teoría</option>
+                      <option value="practico">Práctico</option>
+                      <option value="practica">Práctica</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Día</label>
+                    <select
+                      className="form-select"
+                      value={session.dayOfWeek}
+                      onChange={(e) => handleChange(index, 'dayOfWeek', parseInt(e.target.value))}
+                    >
+                      {DAYS_FULL.map((day, i) => (
+                        <option key={i} value={i + 1}>{day}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Hora inicio</label>
+                    <input
+                      type="time"
+                      className="form-input"
+                      value={session.startTime}
+                      onChange={(e) => handleChange(index, 'startTime', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Hora fin</label>
+                    <input
+                      type="time"
+                      className="form-input"
+                      value={session.endTime}
+                      onChange={(e) => handleChange(index, 'endTime', e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Docente</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={session.docente}
+                      onChange={(e) => handleChange(index, 'docente', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Aula</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={session.aula}
+                      onChange={(e) => handleChange(index, 'aula', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Comisión</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={session.numeroComision}
+                      onChange={(e) => handleChange(index, 'numeroComision', e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      className="form-checkbox"
+                      checked={session.obligatoria}
+                      onChange={(e) => handleChange(index, 'obligatoria', e.target.checked)}
+                    />
+                    Asistencia obligatoria
+                  </label>
+                </div>
+                
+                <button className="btn btn-danger btn-sm" onClick={() => handleRemove(index)}>
+                  Eliminar sesión
+                </button>
+              </div>
+            ))}
+          </div>
+          
+          <button className="btn btn-secondary" onClick={handleAdd} style={{ marginTop: '1rem' }}>
+            + Agregar cursada semanal
+          </button>
+        </div>
+      );
+    }
+
+    function EventsStep({ events, courses, onChange }) {
+      const handleAdd = () => {
+        onChange([...events, createEmptyEvent()]);
+      };
+
+      const handleRemove = (index) => {
+        onChange(events.filter((_, i) => i !== index));
+      };
+
+      const handleChange = (index, field, value) => {
+        const updated = [...events];
+        updated[index] = { ...updated[index], [field]: value };
+        onChange(updated);
+      };
+
+      return (
+        <div>
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            {events.map((event, index) => (
+              <div key={event.id} style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--background)', borderRadius: '8px' }}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Materia</label>
+                    <select
+                      className="form-select"
+                      value={event.courseId}
+                      onChange={(e) => handleChange(index, 'courseId', e.target.value)}
+                    >
+                      <option value="">Seleccionar...</option>
+                      {courses.map(c => (
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Tipo</label>
+                    <select
+                      className="form-select"
+                      value={event.eventualType}
+                      onChange={(e) => handleChange(index, 'eventualType', e.target.value)}
+                    >
+                      <option value="examen">Examen</option>
+                      <option value="entrega">Entrega</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Nombre del examen/entrega</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={event.examType}
+                      onChange={(e) => handleChange(index, 'examType', e.target.value)}
+                      placeholder="Ej: Primer Parcial, TP Final"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Fecha</label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={event.dateISO ? event.dateISO.split('T')[0] : ''}
+                      onChange={(e) => handleChange(index, 'dateISO', new Date(e.target.value).toISOString())}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Notas</label>
+                  <textarea
+                    className="form-textarea"
+                    value={event.notes}
+                    onChange={(e) => handleChange(index, 'notes', e.target.value)}
+                    placeholder="Información adicional..."
+                  />
+                </div>
+                
+                <button className="btn btn-danger btn-sm" onClick={() => handleRemove(index)}>
+                  Eliminar evento
+                </button>
+              </div>
+            ))}
+          </div>
+          
+          <button className="btn btn-secondary" onClick={handleAdd} style={{ marginTop: '1rem' }}>
+            + Agregar examen/entrega
+          </button>
+        </div>
+      );
+    }
+
+    // ============ PANEL LATERAL ============
+    
+    function SidePanel({ item, courses, sessions, events, onClose }) {
+      if (!item || !item.type) return null;
+
+      const course = item.type === 'course' ? item : courses.find(c => c.id === item.courseId);
+      const courseSessions = sessions.filter(s => s.courseId === course?.id);
+      const courseEvents = events.filter(e => e.courseId === course?.id);
+
+      return (
+        <>
+          <div className="modal-overlay" onClick={onClose} style={{ background: 'rgba(0,0,0,0.3)' }}></div>
+          <div className="side-panel open">
+            <div className="side-panel-header">
+              <h2 className="modal-title">{course?.nombre}</h2>
+              <button className="modal-close" onClick={onClose}>×</button>
+            </div>
+            
+            <div className="side-panel-body">
+              {course?.email && (
+                <div className="side-panel-section">
+                  <div className="side-panel-section-title">Contacto</div>
+                  <p>{course.email}</p>
+                </div>
+              )}
+              
+              {course?.notas && (
+                <div className="side-panel-section">
+                  <div className="side-panel-section-title">Notas</div>
+                  <p>{course.notas}</p>
+                </div>
+              )}
+              
+              {courseSessions.length > 0 && (
+                <div className="side-panel-section">
+                  <div className="side-panel-section-title">Cursadas semanales</div>
+                  {courseSessions.map(session => (
+                    <div key={session.id} style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--background)', borderRadius: '6px' }}>
+                      <div style={{ fontWeight: 600, textTransform: 'capitalize', marginBottom: '0.5rem' }}>
+                        {session.modalidad}
+                      </div>
+                      <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                        {getDayName(session.dayOfWeek)} • {formatTime(session.startTime)} - {formatTime(session.endTime)}
+                        {session.aula && ` • ${session.aula}`}
+                        {session.docente && (
+                          <div style={{ marginTop: '0.25rem' }}>
+                            Docente: {session.docente}
+                          </div>
+                        )}
+                        {session.numeroComision && (
+                          <div style={{ marginTop: '0.25rem' }}>
+                            {session.numeroComision}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {courseEvents.length > 0 && (
+                <div className="side-panel-section">
+                  <div className="side-panel-section-title">Exámenes y entregas</div>
+                  {courseEvents.map(event => (
+                    <div key={event.id} style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--background)', borderRadius: '6px' }}>
+                      <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
+                        {event.examType}
+                      </div>
+                      <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                        {new Date(event.dateISO).toLocaleDateString('es-AR', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                        {event.notes && (
+                          <div style={{ marginTop: '0.5rem' }}>
+                            {event.notes}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // ============ RENDER ============
+    
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
