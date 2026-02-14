@@ -373,12 +373,23 @@
     
     .week-grid {
       display: grid;
-      grid-template-columns: 80px repeat(7, 1fr);
-      gap: 1px;
-      background: var(--border);
+      grid-template-columns: 80px 1fr;
+      gap: 0;
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
+    }
+    
+    .week-time-column {
+      border-right: 2px solid var(--border);
+      background: var(--background);
+    }
+    
+    .week-days-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      position: relative;
     }
     
     .week-header {
@@ -389,38 +400,67 @@
       font-weight: 600;
       font-size: 0.9rem;
     }
-    
+
     .week-header:first-child {
       background: var(--surface);
       color: var(--text);
     }
     
-    .time-cell {
-      background: var(--surface);
-      padding: 0.5rem;
-      text-align: center;
+    .time-slot {
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 0.85rem;
       color: var(--text-muted);
-      border-right: 1px solid var(--border);
     }
     
-    .day-cell {
-      background: var(--surface);
-      padding: 0.5rem;
-      min-height: 60px;
+    .time-slot:last-child {
+      border-bottom: none;
+    }
+    
+    .day-column {
       position: relative;
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+    }
+    
+    .day-column:last-child {
+      border-right: none;
+    }
+    
+    .day-column-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+    
+    .hour-line {
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .hour-line:last-child {
+      border-bottom: none;
     }
     
     .session-block {
+      position: absolute;
+      left: 4px;
+      right: 4px;
       background: var(--primary-light);
       color: white;
       padding: 0.5rem;
       border-radius: 4px;
       font-size: 0.85rem;
-      margin-bottom: 0.25rem;
       cursor: pointer;
       transition: all 0.2s;
       border-left: 3px solid var(--primary);
+      overflow: hidden;
+      z-index: 1;
     }
     
     .session-block:hover {
@@ -432,12 +472,8 @@
       background: linear-gradient(135deg, #2d6a4f 0%, #1a4d2e 100%);
     }
     
-    .session-block.practico {
-      background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
-    }
-    
     .session-block.practica {
-      background: linear-gradient(135deg, #c17817 0%, #996515 100%);
+      background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
     }
     
     .session-name {
@@ -597,7 +633,7 @@
       color: #155724;
     }
     
-    .badge-practico {
+    .badge-practica {
       background: #fff3cd;
       color: #856404;
     }
@@ -677,8 +713,10 @@
       box-shadow: var(--shadow-lg);
       transform: translateX(100%);
       transition: transform 0.3s;
-      z-index: 999;
+      z-index: 1001;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
     
     .side-panel.open {
@@ -691,11 +729,14 @@
       position: sticky;
       top: 0;
       background: var(--surface);
-      z-index: 1;
+      z-index: 2;
+      flex-shrink: 0;
     }
     
     .side-panel-body {
       padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
     }
     
     .side-panel-section {
@@ -744,8 +785,30 @@
       }
       
       .week-grid {
-        grid-template-columns: 60px repeat(7, 1fr);
+        grid-template-columns: 60px 1fr;
         font-size: 0.8rem;
+      }
+      
+      .time-slot {
+        height: 50px;
+        font-size: 0.75rem;
+      }
+      
+      .hour-line {
+        height: 50px;
+      }
+      
+      .session-block {
+        font-size: 0.75rem;
+        padding: 0.35rem;
+      }
+      
+      .session-name {
+        font-size: 0.8rem;
+      }
+      
+      .session-time {
+        font-size: 0.65rem;
       }
       
       .month-grid {
@@ -856,7 +919,7 @@
       id: `session-${Date.now()}`,
       termId: 'term-1',
       courseId: '',
-      modalidad: 'teoria',
+      modalidad: 'practica',
       dayOfWeek: 1,
       startTime: '08:00',
       endTime: '10:00',
@@ -879,7 +942,7 @@
 
     // ============ UTILIDADES ============
     
-    const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
     const DAYS_FULL = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
     function getDayName(dayNum) {
@@ -899,6 +962,13 @@
       const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
       return months[month];
+    }
+    
+    function getExamTypeName(event) {
+      if (event.examType === 'Otro' && event.customExamType) {
+        return event.customExamType;
+      }
+      return event.examType || '';
     }
 
     function getDaysInMonth(year, month) {
@@ -1109,20 +1179,20 @@
       
       const weeklySessions = [
         { id: 's1', termId: 'term-1', courseId: 'c1', modalidad: 'teoria', dayOfWeek: 1, startTime: '08:00', endTime: '11:00', docente: 'Prof. Fernández', aula: 'Aula 203', obligatoria: true, numeroComision: 'Comisión 1' },
-        { id: 's2', termId: 'term-1', courseId: 'c1', modalidad: 'practico', dayOfWeek: 3, startTime: '14:00', endTime: '17:00', docente: 'Aux. García', aula: 'Lab 5', obligatoria: true, numeroComision: 'Comisión 1A' },
+        { id: 's2', termId: 'term-1', courseId: 'c1', modalidad: 'practica', dayOfWeek: 3, startTime: '14:00', endTime: '17:00', docente: 'Aux. García', aula: 'Lab 5', obligatoria: true, numeroComision: 'Comisión 1A' },
         { id: 's3', termId: 'term-1', courseId: 'c2', modalidad: 'teoria', dayOfWeek: 2, startTime: '09:00', endTime: '12:00', docente: 'Prof. Martínez', aula: 'Aula 105', obligatoria: true, numeroComision: '' },
-        { id: 's4', termId: 'term-1', courseId: 'c2', modalidad: 'practico', dayOfWeek: 4, startTime: '15:00', endTime: '18:00', docente: 'Aux. Rodríguez', aula: 'Lab 3', obligatoria: true, numeroComision: 'Grupo 2' },
+        { id: 's4', termId: 'term-1', courseId: 'c2', modalidad: 'practica', dayOfWeek: 4, startTime: '15:00', endTime: '18:00', docente: 'Aux. Rodríguez', aula: 'Lab 3', obligatoria: true, numeroComision: 'Grupo 2' },
         { id: 's5', termId: 'term-1', courseId: 'c3', modalidad: 'teoria', dayOfWeek: 1, startTime: '14:00', endTime: '16:00', docente: 'Prof. Silva', aula: 'Aula 301', obligatoria: false, numeroComision: '' },
         { id: 's6', termId: 'term-1', courseId: 'c3', modalidad: 'practica', dayOfWeek: 5, startTime: '10:00', endTime: '13:00', docente: 'Aux. Torres', aula: 'Lab Química', obligatoria: true, numeroComision: 'Grupo A' },
         { id: 's7', termId: 'term-1', courseId: 'c4', modalidad: 'teoria', dayOfWeek: 3, startTime: '08:00', endTime: '10:00', docente: 'Prof. López', aula: 'Anfiteatro', obligatoria: true, numeroComision: '' },
-        { id: 's8', termId: 'term-1', courseId: 'c4', modalidad: 'practico', dayOfWeek: 5, startTime: '14:00', endTime: '17:00', docente: 'Aux. Pérez', aula: 'Lab Física', obligatoria: true, numeroComision: 'Comisión 3' }
+        { id: 's8', termId: 'term-1', courseId: 'c4', modalidad: 'practica', dayOfWeek: 5, startTime: '14:00', endTime: '17:00', docente: 'Aux. Pérez', aula: 'Lab Física', obligatoria: true, numeroComision: 'Comisión 3' }
       ];
       
       const events = [
-        { id: 'e1', termId: 'term-1', courseId: 'c1', eventualType: 'examen', examType: 'Primer Parcial', dateISO: '2025-04-22T03:00:00.000Z', notes: 'Temas 1-4', status: 'confirmed' },
-        { id: 'e2', termId: 'term-1', courseId: 'c2', eventualType: 'examen', examType: 'Primer Parcial', dateISO: '2025-04-25T03:00:00.000Z', notes: '', status: 'confirmed' },
-        { id: 'e3', termId: 'term-1', courseId: 'c1', eventualType: 'entrega', examType: 'TP Integrador', dateISO: '2025-05-15T03:00:00.000Z', notes: 'Trabajo práctico grupal', status: 'confirmed' },
-        { id: 'e4', termId: 'term-1', courseId: 'c3', eventualType: 'examen', examType: 'Primer Parcial', dateISO: '2025-05-02T03:00:00.000Z', notes: '', status: 'confirmed' }
+        { id: 'e1', termId: 'term-1', courseId: 'c1', eventualType: 'examen', examType: '1er Parcial', dateISO: '2025-04-22T03:00:00.000Z', notes: 'Temas 1-4', status: 'confirmed' },
+        { id: 'e2', termId: 'term-1', courseId: 'c2', eventualType: 'examen', examType: '1er Parcial', dateISO: '2025-04-25T03:00:00.000Z', notes: '', status: 'confirmed' },
+        { id: 'e3', termId: 'term-1', courseId: 'c1', eventualType: 'entrega', examType: 'Otro', customExamType: 'TP Integrador', dateISO: '2025-05-15T03:00:00.000Z', notes: 'Trabajo práctico grupal', status: 'confirmed' },
+        { id: 'e4', termId: 'term-1', courseId: 'c3', eventualType: 'examen', examType: '1er Parcial', dateISO: '2025-05-02T03:00:00.000Z', notes: '', status: 'confirmed' }
       ];
       
       return { term, courses, weeklySessions, events };
@@ -1372,7 +1442,9 @@
     // ============ VISTA SEMANA ============
     
     function WeekView({ sessions, courses, searchQuery, onOpenItem }) {
-      const hours = Array.from({ length: 15 }, (_, i) => 8 + i); // 8:00 a 22:00
+      const hours = Array.from({ length: 13 }, (_, i) => 8 + i); // 8:00 a 20:00 (última marca es 20:00, termina a las 21:00)
+      const isMobile = window.innerWidth <= 768;
+      const PIXELS_PER_HOUR = isMobile ? 50 : 60; // Cada hora = 50px en mobile, 60px en desktop
 
       const filteredSessions = sessions.filter(s => {
         if (!searchQuery) return true;
@@ -1387,50 +1459,77 @@
         );
       });
 
-      const getSessionsForDayHour = (day, hour) => {
-        return filteredSessions.filter(s => {
-          if (s.dayOfWeek !== day) return false;
-          const startHour = parseInt(s.startTime.split(':')[0]);
-          return startHour === hour;
-        });
+      const getSessionsForDay = (day) => {
+        return filteredSessions.filter(s => s.dayOfWeek === day);
+      };
+
+      const calculateSessionPosition = (session) => {
+        const [startHour, startMin] = session.startTime.split(':').map(Number);
+        const [endHour, endMin] = session.endTime.split(':').map(Number);
+        
+        const startMinutes = (startHour - 8) * 60 + startMin; // Offset desde las 8:00
+        const endMinutes = (endHour - 8) * 60 + endMin;
+        const durationMinutes = endMinutes - startMinutes;
+        
+        const top = (startMinutes / 60) * PIXELS_PER_HOUR;
+        const height = (durationMinutes / 60) * PIXELS_PER_HOUR;
+        
+        return { top, height };
       };
 
       return (
         <div className="week-view">
-          <div className="week-grid">
-            <div className="week-header">Hora</div>
+          <div style={{ display: 'flex', marginBottom: '1rem', gap: '0' }}>
+            <div style={{ width: isMobile ? '60px' : '80px', background: 'var(--surface)', padding: '1rem 0.5rem', textAlign: 'center', fontWeight: 600, border: '1px solid var(--border)', borderRight: 'none' }}>
+              Hora
+            </div>
             {DAYS.map((day, idx) => (
-              <div key={day} className="week-header">{day}</div>
+              <div key={day} style={{ flex: 1, background: 'var(--primary)', color: 'white', padding: '1rem 0.5rem', textAlign: 'center', fontWeight: 600, border: '1px solid var(--border)', borderLeft: idx === 0 ? '1px solid var(--border)' : 'none' }}>
+                {day}
+              </div>
             ))}
+          </div>
+          
+          <div className="week-grid">
+            <div className="week-time-column">
+              {hours.map(hour => (
+                <div key={hour} className="time-slot">
+                  {hour}:00
+                </div>
+              ))}
+            </div>
             
-            {hours.map(hour => (
-              <React.Fragment key={hour}>
-                <div className="time-cell">{hour}:00</div>
-                {[1, 2, 3, 4, 5, 6, 7].map(day => {
-                  const daySessions = getSessionsForDayHour(day, hour);
-                  return (
-                    <div key={`${hour}-${day}`} className="day-cell">
-                      {daySessions.map(session => {
-                        const course = courses.find(c => c.id === session.courseId);
-                        return (
-                          <div
-                            key={session.id}
-                            className={`session-block ${session.modalidad}`}
-                            onClick={() => onOpenItem(course, 'course')}
-                          >
-                            <div className="session-name">{course?.nombre}</div>
-                            <div className="session-time">
-                              {formatTime(session.startTime)} - {formatTime(session.endTime)}
-                            </div>
-                            {session.aula && <div className="session-time">{session.aula}</div>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </React.Fragment>
-            ))}
+            <div className="week-days-grid">
+              {[1, 2, 3, 4, 5].map(day => (
+                <div key={day} className="day-column">
+                  <div className="day-column-bg">
+                    {hours.map(hour => (
+                      <div key={hour} className="hour-line"></div>
+                    ))}
+                  </div>
+                  
+                  {getSessionsForDay(day).map(session => {
+                    const course = courses.find(c => c.id === session.courseId);
+                    const { top, height } = calculateSessionPosition(session);
+                    
+                    return (
+                      <div
+                        key={session.id}
+                        className={`session-block ${session.modalidad}`}
+                        style={{ top: `${top}px`, height: `${height}px` }}
+                        onClick={() => onOpenItem(course, 'course')}
+                      >
+                        <div className="session-name">{course?.nombre}</div>
+                        <div className="session-time">
+                          {formatTime(session.startTime)} - {formatTime(session.endTime)}
+                        </div>
+                        {session.aula && <div className="session-time">{session.aula}</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       );
@@ -1550,7 +1649,7 @@
                         key={event.id}
                         className="month-event"
                         onClick={() => onOpenItem(event, 'event')}
-                        title={`${courseName} - ${event.examType}`}
+                        title={`${courseName} - ${getExamTypeName(event)}`}
                       >
                         {shortName}
                       </div>
@@ -1615,7 +1714,7 @@
             courseId: event.courseId,
             courseName: course?.nombre || '',
             eventType: event.eventualType,
-            examType: event.examType,
+            examType: getExamTypeName(event),
             date: date.toLocaleDateString('es-AR'),
             notes: event.notes,
             data: event
@@ -1963,14 +2062,6 @@
                     placeholder="Nombre de la materia"
                     value={course.nombre}
                     onChange={(e) => handleChange(index, 'nombre', e.target.value)}
-                    style={{ marginBottom: '0.5rem' }}
-                  />
-                  <input
-                    type="email"
-                    className="form-input"
-                    placeholder="Email de contacto"
-                    value={course.email}
-                    onChange={(e) => handleChange(index, 'email', e.target.value)}
                   />
                 </div>
                 <div className="item-entry-actions">
@@ -2032,7 +2123,6 @@
                       onChange={(e) => handleChange(index, 'modalidad', e.target.value)}
                     >
                       <option value="teoria">Teoría</option>
-                      <option value="practico">Práctico</option>
                       <option value="practica">Práctica</option>
                     </select>
                   </div>
@@ -2143,8 +2233,22 @@
       const handleChange = (index, field, value) => {
         const updated = [...events];
         updated[index] = { ...updated[index], [field]: value };
+        // Si cambia el tipo de examen y no es "Otro", limpiar customExamType
+        if (field === 'examType' && value !== 'Otro') {
+          updated[index].customExamType = '';
+        }
         onChange(updated);
       };
+
+      const examTypes = [
+        '1er Parcial',
+        '2do Parcial',
+        'Parcial Integrador',
+        'Rec 1er Parcial',
+        'Rec 2do Parcial',
+        'Habilitante',
+        'Otro'
+      ];
 
       return (
         <div>
@@ -2182,14 +2286,17 @@
                 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">Nombre del examen/entrega</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={event.examType}
+                    <label className="form-label">Tipo de examen/entrega</label>
+                    <select
+                      className="form-select"
+                      value={event.examType || ''}
                       onChange={(e) => handleChange(index, 'examType', e.target.value)}
-                      placeholder="Ej: Primer Parcial, TP Final"
-                    />
+                    >
+                      <option value="">Seleccionar...</option>
+                      {examTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
                   </div>
                   
                   <div className="form-group">
@@ -2202,6 +2309,19 @@
                     />
                   </div>
                 </div>
+                
+                {event.examType === 'Otro' && (
+                  <div className="form-group">
+                    <label className="form-label">Especificar tipo de examen/entrega</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={event.customExamType || ''}
+                      onChange={(e) => handleChange(index, 'customExamType', e.target.value)}
+                      placeholder="Ej: Coloquio, Evaluación oral, etc."
+                    />
+                  </div>
+                )}
                 
                 <div className="form-group">
                   <label className="form-label">Notas</label>
@@ -2235,10 +2355,22 @@
       const course = item.type === 'course' ? item : courses.find(c => c.id === item.courseId);
       const courseSessions = sessions.filter(s => s.courseId === course?.id);
       const courseEvents = events.filter(e => e.courseId === course?.id);
+      
+      const handleOverlayClick = (e) => {
+        // Solo cerrar si el click es directamente en el overlay, no en sus hijos
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      };
 
       return (
         <>
-          <div className="modal-overlay" onClick={onClose} style={{ background: 'rgba(0,0,0,0.3)' }}></div>
+          <div 
+            className="modal-overlay" 
+            onClick={handleOverlayClick}
+            onWheel={(e) => e.stopPropagation()}
+            style={{ background: 'rgba(0,0,0,0.3)' }}
+          />
           <div className="side-panel open">
             <div className="side-panel-header">
               <h2 className="modal-title">{course?.nombre}</h2>
@@ -2293,7 +2425,7 @@
                   {courseEvents.map(event => (
                     <div key={event.id} style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--background)', borderRadius: '6px' }}>
                       <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
-                        {event.examType}
+                        {getExamTypeName(event)}
                       </div>
                       <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                         {new Date(event.dateISO).toLocaleDateString('es-AR', {
