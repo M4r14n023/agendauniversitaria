@@ -476,6 +476,26 @@
       background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
     }
     
+    .session-block.gym {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      border-left-color: #f59e0b;
+    }
+    
+    .session-block.tenis {
+      background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+      border-left-color: #06b6d4;
+    }
+    
+    .session-block.clase_tenis {
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      border-left-color: #8b5cf6;
+    }
+    
+    .session-block.otra {
+      background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+      border-left-color: #f472b6;
+    }
+    
     .session-name {
       font-weight: 600;
       margin-bottom: 0.25rem;
@@ -641,6 +661,26 @@
     .badge-examen {
       background: #f8d7da;
       color: #721c24;
+    }
+    
+    .badge-gym {
+      background: #fed7aa;
+      color: #9a3412;
+    }
+    
+    .badge-tenis {
+      background: #cffafe;
+      color: #164e63;
+    }
+    
+    .badge-clase_tenis {
+      background: #e9d5ff;
+      color: #581c87;
+    }
+    
+    .badge-otra {
+      background: #fce7f3;
+      color: #9f1239;
     }
     
     .list-item-details {
@@ -870,6 +910,76 @@
       gap: 0.5rem;
     }
     
+    .activity-type-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    
+    .activity-type-card {
+      padding: 1.5rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--surface);
+    }
+    
+    .activity-type-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    .activity-type-card.selected {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: white;
+    }
+    
+    .activity-type-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .activity-type-label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    
+    .multi-select-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    
+    .multi-select-item {
+      padding: 0.5rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      background: var(--surface);
+    }
+    
+    .multi-select-item:hover {
+      border-color: var(--primary);
+    }
+    
+    .multi-select-item.selected {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: white;
+    }
+    
+    .session-icon {
+      margin-right: 0.25rem;
+    }
+    
     .btn-sm {
       padding: 0.5rem 1rem;
       font-size: 0.85rem;
@@ -940,6 +1050,27 @@
       status: 'confirmed'
     });
 
+    const createEmptyExtracurricularSession = () => ({
+      id: `extra-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      termId: 'term-1',
+      kind: 'gym',
+      dayOfWeek: 1,
+      startTime: '08:00',
+      endTime: '09:00',
+      title: 'GYM',
+      colorKey: 'gym',
+      metadata: {
+        muscleGroups: [],
+        customMuscleGroup: '',
+        intensity: '',
+        studentLevel: '',
+        modality: '',
+        studentCount: null,
+        note: '',
+        otherDescription: ''
+      }
+    });
+
     // ============ UTILIDADES ============
     
     const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
@@ -969,6 +1100,48 @@
         return event.customExamType;
       }
       return event.examType || '';
+    }
+    
+    function getActivityIcon(kind) {
+      const icons = {
+        gym: '🏋️',
+        tenis: '🎾',
+        clase_tenis: '🧑‍🏫',
+        otra: '✳️'
+      };
+      return icons[kind] || '✳️';
+    }
+    
+    function getActivityTitle(activity) {
+      const { kind, metadata } = activity;
+      
+      if (kind === 'gym') {
+        const groups = metadata.muscleGroups || [];
+        if (groups.length > 0) {
+          const display = groups.slice(0, 2).join(' + ');
+          return groups.length > 2 ? `GYM (${display}...)` : `GYM (${display})`;
+        }
+        return 'GYM';
+      }
+      
+      if (kind === 'tenis') {
+        return 'Tenis';
+      }
+      
+      if (kind === 'clase_tenis') {
+        if (metadata.modality) {
+          return `Clase Tenis (${metadata.modality})`;
+        }
+        return 'Clase Tenis';
+      }
+      
+      if (kind === 'otra') {
+        // Intentar usar el campo otherDescription como etiqueta
+        const label = metadata.otherDescription ? metadata.otherDescription.substring(0, 20) : '';
+        return label ? `Otra: ${label}` : 'Otra';
+      }
+      
+      return activity.title || 'Actividad';
     }
 
     function getDaysInMonth(year, month) {
@@ -1050,6 +1223,55 @@
       return conflicts;
     }
 
+    // ============ IMPORTACIÓN LEGADO ============
+    
+    // Validar choque de una nueva actividad extracurricular
+    function validateExtracurricularConflict(newActivity, allWeeklySessions, allExtras, courses, editingId = null) {
+      const conflicts = [];
+      const newStart = parseTime(newActivity.startTime);
+      const newEnd = parseTime(newActivity.endTime);
+      
+      // Verificar contra sesiones académicas
+      allWeeklySessions.forEach(session => {
+        if (session.dayOfWeek === newActivity.dayOfWeek) {
+          const start = parseTime(session.startTime);
+          const end = parseTime(session.endTime);
+          
+          if (newStart < end && newEnd > start) {
+            const course = courses.find(c => c.id === session.courseId);
+            conflicts.push({
+              name: course?.nombre || 'Clase',
+              startTime: session.startTime,
+              endTime: session.endTime,
+              type: 'academic'
+            });
+          }
+        }
+      });
+      
+      // Verificar contra otras actividades extracurriculares
+      allExtras.forEach(extra => {
+        // Ignorar si es la misma actividad (edición)
+        if (editingId && extra.id === editingId) return;
+        
+        if (extra.dayOfWeek === newActivity.dayOfWeek) {
+          const start = parseTime(extra.startTime);
+          const end = parseTime(extra.endTime);
+          
+          if (newStart < end && newEnd > start) {
+            conflicts.push({
+              name: getActivityTitle(extra),
+              startTime: extra.startTime,
+              endTime: extra.endTime,
+              type: 'extracurricular'
+            });
+          }
+        }
+      });
+      
+      return conflicts;
+    }
+    
     // ============ IMPORTACIÓN LEGADO ============
     
     function importLegacyData(legacyArray) {
@@ -1195,7 +1417,14 @@
         { id: 'e4', termId: 'term-1', courseId: 'c3', eventualType: 'examen', examType: '1er Parcial', dateISO: '2025-05-02T03:00:00.000Z', notes: '', status: 'confirmed' }
       ];
       
-      return { term, courses, weeklySessions, events };
+      const extracurricularSessions = [
+        { id: 'extra-1', termId: 'term-1', kind: 'gym', dayOfWeek: 2, startTime: '18:00', endTime: '19:30', title: 'GYM', colorKey: 'gym', metadata: { muscleGroups: ['Piernas', 'Core'], note: '' } },
+        { id: 'extra-2', termId: 'term-1', kind: 'tenis', dayOfWeek: 4, startTime: '19:00', endTime: '20:30', title: 'Tenis', colorKey: 'tenis', metadata: { intensity: 'Media', note: '' } }
+      ];
+      
+      const extraMuscleGroupsPreset = ['Piernas', 'Isquios', 'Pecho', 'Espalda', 'Hombros', 'Brazos', 'Core', 'Mixto'];
+      
+      return { term, courses, weeklySessions, events, extracurricularSessions, extraMuscleGroupsPreset };
     }
 
     // ============ STORAGE ============
@@ -1208,7 +1437,15 @@
       const stored = localStorage.getItem('miAgendaUniversitaria');
       if (stored) {
         try {
-          return JSON.parse(stored);
+          const data = JSON.parse(stored);
+          // Asegurar que existan los campos nuevos para retrocompatibilidad
+          if (!data.extracurricularSessions) {
+            data.extracurricularSessions = [];
+          }
+          if (!data.extraMuscleGroupsPreset) {
+            data.extraMuscleGroupsPreset = ['Piernas', 'Isquios', 'Pecho', 'Espalda', 'Hombros', 'Brazos', 'Core', 'Mixto'];
+          }
+          return data;
         } catch (e) {
           console.error('Error al cargar datos:', e);
         }
@@ -1221,12 +1458,13 @@
     function App() {
       const [activeTab, setActiveTab] = useState('semana');
       const [showModal, setShowModal] = useState(false);
+      const [showActivityModal, setShowActivityModal] = useState(false);
       const [searchQuery, setSearchQuery] = useState('');
       const [selectedItem, setSelectedItem] = useState(null);
       const [showSidePanel, setShowSidePanel] = useState(false);
       
       const [data, setData] = useState(() => loadFromStorage());
-      const { term, courses, weeklySessions, events } = data;
+      const { term, courses, weeklySessions, events, extracurricularSessions, extraMuscleGroupsPreset } = data;
 
       // Guardar automáticamente
       useEffect(() => {
@@ -1270,10 +1508,18 @@
                 term: createEmptyTerm(),
                 courses: converted.courses,
                 weeklySessions: converted.weeklySessions,
-                events: converted.events
+                events: converted.events,
+                extracurricularSessions: [],
+                extraMuscleGroupsPreset: ['Piernas', 'Isquios', 'Pecho', 'Espalda', 'Hombros', 'Brazos', 'Core', 'Mixto']
               });
             } else if (imported.term && imported.courses) {
-              // Formato normalizado
+              // Formato normalizado - asegurar campos nuevos
+              if (!imported.extracurricularSessions) {
+                imported.extracurricularSessions = [];
+              }
+              if (!imported.extraMuscleGroupsPreset) {
+                imported.extraMuscleGroupsPreset = ['Piernas', 'Isquios', 'Pecho', 'Espalda', 'Hombros', 'Brazos', 'Core', 'Mixto'];
+              }
               setData(imported);
             } else {
               alert('Formato de archivo no reconocido');
@@ -1311,6 +1557,9 @@
                   </button>
                   <button className="btn btn-primary" onClick={() => setShowModal(true)}>
                     Agregar / Editar datos
+                  </button>
+                  <button className="btn btn-primary" onClick={() => setShowActivityModal(true)}>
+                    + Actividad
                   </button>
                 </div>
               </div>
@@ -1379,6 +1628,7 @@
               <WeekView
                 sessions={weeklySessions}
                 courses={courses}
+                extracurricularSessions={extracurricularSessions}
                 searchQuery={searchQuery}
                 onOpenItem={handleOpenItem}
               />
@@ -1426,6 +1676,17 @@
             />
           )}
 
+          {showActivityModal && (
+            <ActivityModal
+              data={data}
+              onSave={(newData) => {
+                setData(newData);
+                setShowActivityModal(false);
+              }}
+              onClose={() => setShowActivityModal(false)}
+            />
+          )}
+
           {showSidePanel && (
             <SidePanel
               item={selectedItem}
@@ -1441,7 +1702,7 @@
 
     // ============ VISTA SEMANA ============
     
-    function WeekView({ sessions, courses, searchQuery, onOpenItem }) {
+    function WeekView({ sessions, courses, extracurricularSessions, searchQuery, onOpenItem }) {
       const hours = Array.from({ length: 13 }, (_, i) => 8 + i); // 8:00 a 20:00 (última marca es 20:00, termina a las 21:00)
       const isMobile = window.innerWidth <= 768;
       const PIXELS_PER_HOUR = isMobile ? 50 : 60; // Cada hora = 50px en mobile, 60px en desktop
@@ -1458,9 +1719,23 @@
           s.modalidad.toLowerCase().includes(q)
         );
       });
+      
+      const filteredExtras = (extracurricularSessions || []).filter(e => {
+        if (!searchQuery) return true;
+        const q = searchQuery.toLowerCase();
+        const title = getActivityTitle(e).toLowerCase();
+        const note = e.metadata?.note?.toLowerCase() || '';
+        const desc = e.metadata?.otherDescription?.toLowerCase() || '';
+        const groups = (e.metadata?.muscleGroups || []).join(' ').toLowerCase();
+        return title.includes(q) || note.includes(q) || desc.includes(q) || groups.includes(q);
+      });
 
       const getSessionsForDay = (day) => {
         return filteredSessions.filter(s => s.dayOfWeek === day);
+      };
+      
+      const getExtrasForDay = (day) => {
+        return filteredExtras.filter(e => e.dayOfWeek === day);
       };
 
       const calculateSessionPosition = (session) => {
@@ -1524,6 +1799,27 @@
                           {formatTime(session.startTime)} - {formatTime(session.endTime)}
                         </div>
                         {session.aula && <div className="session-time">{session.aula}</div>}
+                      </div>
+                    );
+                  })}
+                  
+                  {getExtrasForDay(day).map(extra => {
+                    const { top, height } = calculateSessionPosition(extra);
+                    
+                    return (
+                      <div
+                        key={extra.id}
+                        className={`session-block ${extra.colorKey}`}
+                        style={{ top: `${top}px`, height: `${height}px` }}
+                        onClick={() => onOpenItem(extra, 'extra')}
+                      >
+                        <div className="session-name">
+                          <span className="session-icon">{getActivityIcon(extra.kind)}</span>
+                          {getActivityTitle(extra)}
+                        </div>
+                        <div className="session-time">
+                          {formatTime(extra.startTime)} - {formatTime(extra.endTime)}
+                        </div>
                       </div>
                     );
                   })}
@@ -1907,6 +2203,428 @@
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ============ MODAL DE ACTIVIDADES EXTRACURRICULARES ============
+    
+    function ActivityModal({ data, onSave, onClose }) {
+      const [step, setStep] = useState(0);
+      const [activity, setActivity] = useState(createEmptyExtracurricularSession());
+      const [conflicts, setConflicts] = useState([]);
+      const [showNewMuscleInput, setShowNewMuscleInput] = useState(false);
+      const [newMuscleGroup, setNewMuscleGroup] = useState('');
+
+      const activityTypes = [
+        { kind: 'gym', label: 'Gym', icon: '🏋️' },
+        { kind: 'tenis', label: 'Tenis', icon: '🎾' },
+        { kind: 'clase_tenis', label: 'Clases de tenis', icon: '🧑‍🏫' },
+        { kind: 'otra', label: 'Otra', icon: '✳️' }
+      ];
+
+      const handleTypeSelect = (kind) => {
+        let title = 'Actividad';
+        if (kind === 'gym') title = 'GYM';
+        else if (kind === 'tenis') title = 'Tenis';
+        else if (kind === 'clase_tenis') title = 'Clase Tenis';
+        else if (kind === 'otra') title = 'Otra';
+        
+        setActivity({ 
+          ...activity, 
+          kind, 
+          colorKey: kind,
+          title
+        });
+        setStep(1);
+      };
+
+      const handleSave = () => {
+        // Validar horarios
+        if (!activity.startTime || !activity.endTime) {
+          alert('Debe completar hora de inicio y fin');
+          return;
+        }
+        
+        const start = parseTime(activity.startTime);
+        const end = parseTime(activity.endTime);
+        
+        if (start >= end) {
+          alert('La hora de fin debe ser posterior a la hora de inicio');
+          return;
+        }
+        
+        // Validar choques
+        const detectedConflicts = validateExtracurricularConflict(
+          activity,
+          data.weeklySessions,
+          data.extracurricularSessions || [],
+          data.courses
+        );
+        
+        if (detectedConflicts.length > 0) {
+          setConflicts(detectedConflicts);
+          return;
+        }
+        
+        // Advertir si está fuera del rango visual
+        if (start < parseTime('08:00') || end > parseTime('21:00')) {
+          if (!confirm('El horario está fuera del rango visual (8:00-21:00). ¿Desea continuar de todos modos?')) {
+            return;
+          }
+        }
+        
+        // Advertencia suave para "Otra" sin descripción
+        if (activity.kind === 'otra' && !activity.metadata.otherDescription) {
+          if (!confirm('No especificó qué tipo de actividad es "Otra". ¿Desea continuar de todos modos?')) {
+            return;
+          }
+        }
+        
+        // Guardar
+        const updatedExtras = [...(data.extracurricularSessions || []), activity];
+        onSave({
+          ...data,
+          extracurricularSessions: updatedExtras
+        });
+      };
+
+      const toggleMuscleGroup = (group) => {
+        const current = activity.metadata.muscleGroups || [];
+        const updated = current.includes(group)
+          ? current.filter(g => g !== group)
+          : [...current, group];
+        
+        setActivity({
+          ...activity,
+          metadata: { ...activity.metadata, muscleGroups: updated }
+        });
+      };
+      
+      const handleAddNewMuscle = () => {
+        if (!newMuscleGroup.trim()) return;
+        
+        const updatedPreset = [...(data.extraMuscleGroupsPreset || []), newMuscleGroup];
+        onSave({
+          ...data,
+          extraMuscleGroupsPreset: updatedPreset
+        });
+        
+        toggleMuscleGroup(newMuscleGroup);
+        setNewMuscleGroup('');
+        setShowNewMuscleInput(false);
+      };
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">+ Actividad Extracurricular</h2>
+              <button className="modal-close" onClick={onClose}>×</button>
+            </div>
+            
+            <div className="modal-body">
+              {conflicts.length > 0 && (
+                <div className="alert alert-error">
+                  <strong>⚠️ Choque de horario detectado</strong>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    {conflicts.map((c, i) => (
+                      <div key={i}>• {c.name} ({formatTime(c.startTime)}-{formatTime(c.endTime)})</div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                    No se puede guardar la actividad con este horario. Por favor, elija otro horario.
+                  </div>
+                </div>
+              )}
+
+              {step === 0 && (
+                <div>
+                  <p style={{ marginBottom: '1rem', color: 'var(--text-muted)' }}>
+                    Seleccione el tipo de actividad:
+                  </p>
+                  <div className="activity-type-cards">
+                    {activityTypes.map(type => (
+                      <div
+                        key={type.kind}
+                        className={`activity-type-card ${activity.kind === type.kind ? 'selected' : ''}`}
+                        onClick={() => handleTypeSelect(type.kind)}
+                      >
+                        <div className="activity-type-icon">{type.icon}</div>
+                        <div className="activity-type-label">{type.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {step === 1 && (
+                <div>
+                  <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--background)', borderRadius: '8px' }}>
+                    <strong>Tipo seleccionado:</strong> {activityTypes.find(t => t.kind === activity.kind)?.label}
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Día *</label>
+                      <select
+                        className="form-select"
+                        value={activity.dayOfWeek}
+                        onChange={(e) => {
+                          setActivity({ ...activity, dayOfWeek: parseInt(e.target.value) });
+                          setConflicts([]);
+                        }}
+                      >
+                        {DAYS_FULL.slice(0, 5).map((day, i) => (
+                          <option key={i} value={i + 1}>{day}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Hora inicio *</label>
+                      <input
+                        type="time"
+                        className="form-input"
+                        value={activity.startTime}
+                        onChange={(e) => {
+                          setActivity({ ...activity, startTime: e.target.value });
+                          setConflicts([]);
+                        }}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Hora fin *</label>
+                      <input
+                        type="time"
+                        className="form-input"
+                        value={activity.endTime}
+                        onChange={(e) => {
+                          setActivity({ ...activity, endTime: e.target.value });
+                          setConflicts([]);
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Campos específicos por tipo */}
+                  {activity.kind === 'gym' && (
+                    <div>
+                      <div className="form-group">
+                        <label className="form-label">Grupos musculares (opcional)</label>
+                        <div className="multi-select-group">
+                          {(data.extraMuscleGroupsPreset || []).map(group => (
+                            <div
+                              key={group}
+                              className={`multi-select-item ${(activity.metadata.muscleGroups || []).includes(group) ? 'selected' : ''}`}
+                              onClick={() => toggleMuscleGroup(group)}
+                            >
+                              {group}
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {!showNewMuscleInput ? (
+                          <button 
+                            className="btn btn-secondary btn-sm" 
+                            onClick={() => setShowNewMuscleInput(true)}
+                            style={{ marginTop: '0.5rem' }}
+                          >
+                            + Agregar nuevo grupo
+                          </button>
+                        ) : (
+                          <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="Nombre del grupo muscular"
+                              value={newMuscleGroup}
+                              onChange={(e) => setNewMuscleGroup(e.target.value)}
+                              style={{ flex: 1 }}
+                            />
+                            <button className="btn btn-primary btn-sm" onClick={handleAddNewMuscle}>
+                              Agregar
+                            </button>
+                            <button className="btn btn-secondary btn-sm" onClick={() => {
+                              setShowNewMuscleInput(false);
+                              setNewMuscleGroup('');
+                            }}>
+                              Cancelar
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="form-group">
+                        <label className="form-label">Notas (opcional)</label>
+                        <textarea
+                          className="form-textarea"
+                          value={activity.metadata.note || ''}
+                          onChange={(e) => setActivity({
+                            ...activity,
+                            metadata: { ...activity.metadata, note: e.target.value }
+                          })}
+                          placeholder="Observaciones, ejercicios específicos, etc."
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {activity.kind === 'tenis' && (
+                    <div>
+                      <div className="form-group">
+                        <label className="form-label">Intensidad (opcional)</label>
+                        <select
+                          className="form-select"
+                          value={activity.metadata.intensity || ''}
+                          onChange={(e) => setActivity({
+                            ...activity,
+                            metadata: { ...activity.metadata, intensity: e.target.value }
+                          })}
+                        >
+                          <option value="">Seleccionar...</option>
+                          <option value="Baja">Baja</option>
+                          <option value="Media">Media</option>
+                          <option value="Alta">Alta</option>
+                        </select>
+                      </div>
+                      
+                      <div className="form-group">
+                        <label className="form-label">Notas (opcional)</label>
+                        <textarea
+                          className="form-textarea"
+                          value={activity.metadata.note || ''}
+                          onChange={(e) => setActivity({
+                            ...activity,
+                            metadata: { ...activity.metadata, note: e.target.value }
+                          })}
+                          placeholder="Observaciones sobre el entrenamiento..."
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {activity.kind === 'clase_tenis' && (
+                    <div>
+                      <div className="form-group">
+                        <label className="form-label">Nivel alumnos (opcional)</label>
+                        <select
+                          className="form-select"
+                          value={activity.metadata.studentLevel || ''}
+                          onChange={(e) => setActivity({
+                            ...activity,
+                            metadata: { ...activity.metadata, studentLevel: e.target.value }
+                          })}
+                        >
+                          <option value="">Seleccionar...</option>
+                          <option value="Inicial">Inicial</option>
+                          <option value="Intermedio">Intermedio</option>
+                          <option value="Avanzado">Avanzado</option>
+                          <option value="Competición">Competición</option>
+                          <option value="Mixto">Mixto</option>
+                        </select>
+                      </div>
+                      
+                      <div className="form-group">
+                        <label className="form-label">Modalidad (opcional)</label>
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                            <input
+                              type="radio"
+                              name="modality"
+                              value="Individual"
+                              checked={activity.metadata.modality === 'Individual'}
+                              onChange={(e) => setActivity({
+                                ...activity,
+                                metadata: { ...activity.metadata, modality: e.target.value, studentCount: null }
+                              })}
+                              style={{ marginRight: '0.5rem' }}
+                            />
+                            Individual
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                            <input
+                              type="radio"
+                              name="modality"
+                              value="Grupal"
+                              checked={activity.metadata.modality === 'Grupal'}
+                              onChange={(e) => setActivity({
+                                ...activity,
+                                metadata: { ...activity.metadata, modality: e.target.value }
+                              })}
+                              style={{ marginRight: '0.5rem' }}
+                            />
+                            Grupal
+                          </label>
+                        </div>
+                      </div>
+                      
+                      {activity.metadata.modality === 'Grupal' && (
+                        <div className="form-group">
+                          <label className="form-label">Cantidad de alumnos (opcional)</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={activity.metadata.studentCount || ''}
+                            onChange={(e) => setActivity({
+                              ...activity,
+                              metadata: { ...activity.metadata, studentCount: parseInt(e.target.value) || null }
+                            })}
+                            placeholder="Ej: 4"
+                            min="1"
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="form-group">
+                        <label className="form-label">Notas (opcional)</label>
+                        <textarea
+                          className="form-textarea"
+                          value={activity.metadata.note || ''}
+                          onChange={(e) => setActivity({
+                            ...activity,
+                            metadata: { ...activity.metadata, note: e.target.value }
+                          })}
+                          placeholder="Observaciones sobre la clase..."
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {activity.kind === 'otra' && (
+                    <div>
+                      <div className="form-group">
+                        <label className="form-label">Especificar (recomendado)</label>
+                        <textarea
+                          className="form-textarea"
+                          value={activity.metadata.otherDescription || ''}
+                          onChange={(e) => setActivity({
+                            ...activity,
+                            metadata: { ...activity.metadata, otherDescription: e.target.value }
+                          })}
+                          placeholder="¿Qué tipo de actividad es? Ej: Trámite, Médico, Reunion, etc."
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className="modal-footer">
+              {step === 1 && (
+                <button className="btn btn-secondary" onClick={() => setStep(0)}>
+                  Atrás
+                </button>
+              )}
+              {step === 1 && (
+                <button className="btn btn-primary" onClick={handleSave}>
+                  Guardar actividad
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -2352,16 +3070,104 @@
     function SidePanel({ item, courses, sessions, events, onClose }) {
       if (!item || !item.type) return null;
 
-      const course = item.type === 'course' ? item : courses.find(c => c.id === item.courseId);
-      const courseSessions = sessions.filter(s => s.courseId === course?.id);
-      const courseEvents = events.filter(e => e.courseId === course?.id);
-      
       const handleOverlayClick = (e) => {
         // Solo cerrar si el click es directamente en el overlay, no en sus hijos
         if (e.target === e.currentTarget) {
           onClose();
         }
       };
+
+      // Renderizar panel para actividades extracurriculares
+      if (item.type === 'extra') {
+        const activity = item;
+        return (
+          <>
+            <div 
+              className="modal-overlay" 
+              onClick={handleOverlayClick}
+              onWheel={(e) => e.stopPropagation()}
+              style={{ background: 'rgba(0,0,0,0.3)' }}
+            />
+            <div className="side-panel open">
+              <div className="side-panel-header">
+                <h2 className="modal-title">
+                  <span style={{ marginRight: '0.5rem' }}>{getActivityIcon(activity.kind)}</span>
+                  {getActivityTitle(activity)}
+                </h2>
+                <button className="modal-close" onClick={onClose}>×</button>
+              </div>
+              
+              <div className="side-panel-body">
+                <div className="side-panel-section">
+                  <div className="side-panel-section-title">Horario</div>
+                  <p>{getDayName(activity.dayOfWeek)} • {formatTime(activity.startTime)} - {formatTime(activity.endTime)}</p>
+                </div>
+                
+                {activity.kind === 'gym' && activity.metadata.muscleGroups && activity.metadata.muscleGroups.length > 0 && (
+                  <div className="side-panel-section">
+                    <div className="side-panel-section-title">Grupos musculares</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {activity.metadata.muscleGroups.map(group => (
+                        <span key={group} style={{ padding: '0.25rem 0.75rem', background: 'var(--background)', borderRadius: '12px', fontSize: '0.9rem' }}>
+                          {group}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {activity.kind === 'tenis' && activity.metadata.intensity && (
+                  <div className="side-panel-section">
+                    <div className="side-panel-section-title">Intensidad</div>
+                    <p>{activity.metadata.intensity}</p>
+                  </div>
+                )}
+                
+                {activity.kind === 'clase_tenis' && (
+                  <>
+                    {activity.metadata.studentLevel && (
+                      <div className="side-panel-section">
+                        <div className="side-panel-section-title">Nivel alumnos</div>
+                        <p>{activity.metadata.studentLevel}</p>
+                      </div>
+                    )}
+                    {activity.metadata.modality && (
+                      <div className="side-panel-section">
+                        <div className="side-panel-section-title">Modalidad</div>
+                        <p>
+                          {activity.metadata.modality}
+                          {activity.metadata.modality === 'Grupal' && activity.metadata.studentCount && 
+                            ` (${activity.metadata.studentCount} alumnos)`
+                          }
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+                
+                {activity.kind === 'otra' && activity.metadata.otherDescription && (
+                  <div className="side-panel-section">
+                    <div className="side-panel-section-title">Descripción</div>
+                    <p>{activity.metadata.otherDescription}</p>
+                  </div>
+                )}
+                
+                {activity.metadata.note && (
+                  <div className="side-panel-section">
+                    <div className="side-panel-section-title">Notas</div>
+                    <p>{activity.metadata.note}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        );
+      }
+
+      // Renderizar panel para cursos (código original)
+      const course = item.type === 'course' ? item : courses.find(c => c.id === item.courseId);
+      const courseSessions = sessions.filter(s => s.courseId === course?.id);
+      const courseEvents = events.filter(e => e.courseId === course?.id);
 
       return (
         <>
