@@ -1057,6 +1057,7 @@
       dayOfWeek: 1,
       startTime: '08:00',
       endTime: '09:00',
+      startDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD
       title: 'GYM',
       colorKey: 'gym',
       metadata: {
@@ -1418,8 +1419,8 @@
       ];
       
       const extracurricularSessions = [
-        { id: 'extra-1', termId: 'term-1', kind: 'gym', dayOfWeek: 2, startTime: '18:00', endTime: '19:30', title: 'GYM', colorKey: 'gym', metadata: { muscleGroups: ['Piernas', 'Core'], note: '' } },
-        { id: 'extra-2', termId: 'term-1', kind: 'tenis', dayOfWeek: 4, startTime: '19:00', endTime: '20:30', title: 'Tenis', colorKey: 'tenis', metadata: { intensity: 'Media', note: '' } }
+        { id: 'extra-1', termId: 'term-1', kind: 'gym', dayOfWeek: 2, startTime: '18:00', endTime: '19:30', startDate: '2025-03-10', title: 'GYM', colorKey: 'gym', metadata: { muscleGroups: ['Piernas', 'Core'], note: '' } },
+        { id: 'extra-2', termId: 'term-1', kind: 'tenis', dayOfWeek: 4, startTime: '19:00', endTime: '20:30', startDate: '2025-03-10', title: 'Tenis', colorKey: 'tenis', metadata: { intensity: 'Media', note: '' } }
       ];
       
       const extraMuscleGroupsPreset = ['Piernas', 'Isquios', 'Pecho', 'Espalda', 'Hombros', 'Brazos', 'Core', 'Mixto'];
@@ -1459,6 +1460,7 @@
       const [activeTab, setActiveTab] = useState('semana');
       const [showModal, setShowModal] = useState(false);
       const [showActivityModal, setShowActivityModal] = useState(false);
+      const [editingActivity, setEditingActivity] = useState(null);
       const [searchQuery, setSearchQuery] = useState('');
       const [selectedItem, setSelectedItem] = useState(null);
       const [showSidePanel, setShowSidePanel] = useState(false);
@@ -1534,6 +1536,19 @@
       const handleOpenItem = (item, type) => {
         setSelectedItem({ ...item, type });
         setShowSidePanel(true);
+      };
+
+      const handleEditActivity = (activity) => {
+        setEditingActivity(activity);
+        setShowActivityModal(true);
+      };
+
+      const handleDeleteActivity = (activityId) => {
+        const updatedExtras = (extracurricularSessions || []).filter(e => e.id !== activityId);
+        setData({
+          ...data,
+          extracurricularSessions: updatedExtras
+        });
       };
 
       return (
@@ -1679,11 +1694,16 @@
           {showActivityModal && (
             <ActivityModal
               data={data}
+              editingActivity={editingActivity}
               onSave={(newData) => {
                 setData(newData);
                 setShowActivityModal(false);
+                setEditingActivity(null);
               }}
-              onClose={() => setShowActivityModal(false)}
+              onClose={() => {
+                setShowActivityModal(false);
+                setEditingActivity(null);
+              }}
             />
           )}
 
@@ -1694,6 +1714,8 @@
               sessions={weeklySessions}
               events={events}
               onClose={() => setShowSidePanel(false)}
+              onEdit={handleEditActivity}
+              onDelete={handleDeleteActivity}
             />
           )}
         </div>
@@ -2211,9 +2233,9 @@
 
     // ============ MODAL DE ACTIVIDADES EXTRACURRICULARES ============
     
-    function ActivityModal({ data, onSave, onClose }) {
-      const [step, setStep] = useState(0);
-      const [activity, setActivity] = useState(createEmptyExtracurricularSession());
+    function ActivityModal({ data, editingActivity, onSave, onClose }) {
+      const [step, setStep] = useState(editingActivity ? 1 : 0);
+      const [activity, setActivity] = useState(editingActivity || createEmptyExtracurricularSession());
       const [conflicts, setConflicts] = useState([]);
       const [showNewMuscleInput, setShowNewMuscleInput] = useState(false);
       const [newMuscleGroup, setNewMuscleGroup] = useState('');
@@ -2248,6 +2270,11 @@
           return;
         }
         
+        if (!activity.startDate) {
+          alert('Debe completar la fecha de inicio');
+          return;
+        }
+        
         const start = parseTime(activity.startTime);
         const end = parseTime(activity.endTime);
         
@@ -2256,12 +2283,13 @@
           return;
         }
         
-        // Validar choques
+        // Validar choques (pasando el ID si estamos editando)
         const detectedConflicts = validateExtracurricularConflict(
           activity,
           data.weeklySessions,
           data.extracurricularSessions || [],
-          data.courses
+          data.courses,
+          editingActivity ? activity.id : null
         );
         
         if (detectedConflicts.length > 0) {
@@ -2283,8 +2311,18 @@
           }
         }
         
-        // Guardar
-        const updatedExtras = [...(data.extracurricularSessions || []), activity];
+        // Guardar (editar o crear)
+        let updatedExtras;
+        if (editingActivity) {
+          // Edición: reemplazar la actividad existente
+          updatedExtras = (data.extracurricularSessions || []).map(e => 
+            e.id === activity.id ? activity : e
+          );
+        } else {
+          // Creación: agregar nueva
+          updatedExtras = [...(data.extracurricularSessions || []), activity];
+        }
+        
         onSave({
           ...data,
           extracurricularSessions: updatedExtras
@@ -2321,7 +2359,7 @@
         <div className="modal-overlay" onClick={onClose}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">+ Actividad Extracurricular</h2>
+              <h2 className="modal-title">{editingActivity ? 'Editar Actividad' : '+ Actividad Extracurricular'}</h2>
               <button className="modal-close" onClick={onClose}>×</button>
             </div>
             
@@ -2381,6 +2419,18 @@
                           <option key={i} value={i + 1}>{day}</option>
                         ))}
                       </select>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label className="form-label">Fecha de inicio *</label>
+                      <input
+                        type="date"
+                        className="form-input"
+                        value={activity.startDate || ''}
+                        onChange={(e) => {
+                          setActivity({ ...activity, startDate: e.target.value });
+                        }}
+                      />
                     </div>
 
                     <div className="form-group">
@@ -3067,7 +3117,7 @@
 
     // ============ PANEL LATERAL ============
     
-    function SidePanel({ item, courses, sessions, events, onClose }) {
+    function SidePanel({ item, courses, sessions, events, onClose, onEdit, onDelete }) {
       if (!item || !item.type) return null;
 
       const handleOverlayClick = (e) => {
@@ -3101,6 +3151,39 @@
                 <div className="side-panel-section">
                   <div className="side-panel-section-title">Horario</div>
                   <p>{getDayName(activity.dayOfWeek)} • {formatTime(activity.startTime)} - {formatTime(activity.endTime)}</p>
+                  {activity.startDate && (
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                      Desde: {new Date(activity.startDate + 'T00:00:00').toLocaleDateString('es-AR')}
+                    </p>
+                  )}
+                </div>
+                
+                {/* Botones de acción */}
+                <div className="side-panel-section">
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      onClick={() => {
+                        onClose();
+                        onEdit(activity);
+                      }}
+                      style={{ flex: 1 }}
+                    >
+                      ✏️ Editar
+                    </button>
+                    <button 
+                      className="btn btn-danger btn-sm" 
+                      onClick={() => {
+                        if (confirm('¿Está seguro de eliminar esta actividad?')) {
+                          onDelete(activity.id);
+                          onClose();
+                        }
+                      }}
+                      style={{ flex: 1 }}
+                    >
+                      🗑️ Eliminar
+                    </button>
+                  </div>
                 </div>
                 
                 {activity.kind === 'gym' && activity.metadata.muscleGroups && activity.metadata.muscleGroups.length > 0 && (
