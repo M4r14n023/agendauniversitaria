@@ -569,6 +569,17 @@
       opacity: 0.4;
     }
     
+    .month-day.today {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border: 2px solid var(--accent);
+    }
+    
+    .month-day.today .month-day-number {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 1.1em;
+    }
+    
     .month-day-number {
       font-weight: 600;
       color: var(--text);
@@ -1101,6 +1112,32 @@
         return event.customExamType;
       }
       return event.examType || '';
+    }
+    
+    // Asignar color único a cada materia basado en su ID
+    function getCourseColor(courseId) {
+      const colors = [
+        { bg: 'linear-gradient(135deg, #2d6a4f 0%, #1a4d2e 100%)', border: '#2d6a4f' }, // Verde
+        { bg: 'linear-gradient(135deg, #8b4513 0%, #654321 100%)', border: '#8b4513' }, // Marrón
+        { bg: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)', border: '#1e40af' }, // Azul
+        { bg: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', border: '#7c3aed' }, // Violeta
+        { bg: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)', border: '#dc2626' }, // Rojo
+        { bg: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', border: '#ea580c' }, // Naranja oscuro
+        { bg: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)', border: '#0891b2' }, // Cian
+        { bg: 'linear-gradient(135deg, #65a30d 0%, #4d7c0f 100%)', border: '#65a30d' }, // Verde lima
+        { bg: 'linear-gradient(135deg, #db2777 0%, #be185d 100%)', border: '#db2777' }, // Rosa
+        { bg: 'linear-gradient(135deg, #0369a1 0%, #075985 100%)', border: '#0369a1' }, // Azul cielo
+      ];
+      
+      if (!courseId) return colors[0];
+      
+      // Usar hash del courseId para asignar un color consistente
+      let hash = 0;
+      for (let i = 0; i < courseId.length; i++) {
+        hash = courseId.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const index = Math.abs(hash) % colors.length;
+      return colors[index];
     }
     
     function getActivityIcon(kind) {
@@ -1808,12 +1845,18 @@
                   {getSessionsForDay(day).map(session => {
                     const course = courses.find(c => c.id === session.courseId);
                     const { top, height } = calculateSessionPosition(session);
+                    const courseColor = getCourseColor(session.courseId);
                     
                     return (
                       <div
                         key={session.id}
-                        className={`session-block ${session.modalidad}`}
-                        style={{ top: `${top}px`, height: `${height}px` }}
+                        className="session-block"
+                        style={{ 
+                          top: `${top}px`, 
+                          height: `${height}px`,
+                          background: courseColor.bg,
+                          borderLeftColor: courseColor.border
+                        }}
                         onClick={() => onOpenItem(course, 'course')}
                       >
                         <div className="session-name">{course?.nombre}</div>
@@ -1870,6 +1913,10 @@
       
       const nextMonth = () => {
         setCurrentDate(new Date(year, month + 1, 1));
+      };
+      
+      const goToToday = () => {
+        setCurrentDate(new Date());
       };
 
       const getSessionsForDate = (date) => {
@@ -1928,6 +1975,7 @@
             <h2 className="month-title">{getMonthName(month)} {year}</h2>
             <div className="month-nav">
               <button className="btn btn-secondary btn-sm" onClick={prevMonth}>← Anterior</button>
+              <button className="btn btn-primary btn-sm" onClick={goToToday}>📅 Hoy</button>
               <button className="btn btn-secondary btn-sm" onClick={nextMonth}>Siguiente →</button>
             </div>
           </div>
@@ -1941,18 +1989,29 @@
               const daySessions = getSessionsForDate(dayInfo.date);
               const dayEvents = getEventsForDate(dayInfo.date);
               
+              // Verificar si es el día de hoy
+              const today = new Date();
+              const isToday = isSameDay(dayInfo.date, today);
+              
               return (
                 <div
                   key={idx}
-                  className={`month-day ${!dayInfo.isCurrentMonth ? 'other-month' : ''}`}
+                  className={`month-day ${!dayInfo.isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`}
                 >
                   <div className="month-day-number">{dayInfo.day}</div>
                   
                   {daySessions.length > 0 && (
                     <div>
-                      {daySessions.slice(0, 2).map((s, i) => (
-                        <span key={i} className="month-day-indicator"></span>
-                      ))}
+                      {daySessions.slice(0, 3).map((s, i) => {
+                        const courseColor = getCourseColor(s.courseId);
+                        return (
+                          <span 
+                            key={i} 
+                            className="month-day-indicator"
+                            style={{ background: courseColor.border }}
+                          ></span>
+                        );
+                      })}
                     </div>
                   )}
                   
@@ -2104,7 +2163,14 @@
                 <div className="list-item-header">
                   <div className="list-item-title">{item.courseName}</div>
                   {item.type === 'session' && (
-                    <span className={`list-item-badge badge-${item.modalidad}`}>
+                    <span 
+                      className="list-item-badge"
+                      style={{ 
+                        background: getCourseColor(item.courseId).border + '20',
+                        color: getCourseColor(item.courseId).border,
+                        border: `2px solid ${getCourseColor(item.courseId).border}`
+                      }}
+                    >
                       {item.modalidad}
                     </span>
                   )}
