@@ -1087,6 +1087,7 @@
     
     const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
     const DAYS_FULL = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    const DAYS_MONTH = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
     function getDayName(dayNum) {
       return DAYS_FULL[dayNum - 1] || '';
@@ -1942,11 +1943,11 @@
       
       // Días del mes anterior
       const prevMonthDays = getDaysInMonth(year, month - 1);
-      for (let i = firstDay - 2; i >= 0; i--) {
+      for (let i = firstDay - 1; i > 0; i--) {
         days.push({
-          day: prevMonthDays - i,
+          day: prevMonthDays - i + 1,
           isCurrentMonth: false,
-          date: new Date(year, month - 1, prevMonthDays - i)
+          date: new Date(year, month - 1, prevMonthDays - i + 1)
         });
       }
       
@@ -1981,7 +1982,7 @@
           </div>
           
           <div className="month-grid">
-            {DAYS.map(day => (
+            {DAYS_MONTH.map(day => (
               <div key={day} className="month-day-header">{day}</div>
             ))}
             
