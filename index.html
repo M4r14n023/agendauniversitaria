@@ -1120,7 +1120,7 @@
       const colors = [
         { bg: 'linear-gradient(135deg, #059669 0%, #047857 100%)', border: '#059669' }, // Verde esmeralda
         { bg: 'linear-gradient(135deg, #8b4513 0%, #654321 100%)', border: '#8b4513' }, // Marrón
-        { bg: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)', border: '#1e40af' }, // Azul
+        { bg: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)', border: '#1e40af' }, // Azul marino
         { bg: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', border: '#7c3aed' }, // Violeta
         { bg: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)', border: '#dc2626' }, // Rojo
         { bg: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', border: '#ea580c' }, // Naranja oscuro
@@ -1132,11 +1132,14 @@
       
       if (!courseId) return colors[0];
       
-      // Usar hash del courseId para asignar un color consistente
+      // Mejorar hash para mejor distribución usando múltiples operaciones
       let hash = 0;
       for (let i = 0; i < courseId.length; i++) {
-        hash = courseId.charCodeAt(i) + ((hash << 5) - hash);
+        const char = courseId.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash ^ (hash >>> 16); // XOR con shift para mejor distribución
       }
+      // Usar valor absoluto y módulo para obtener índice
       const index = Math.abs(hash) % colors.length;
       return colors[index];
     }
