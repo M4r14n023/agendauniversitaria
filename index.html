@@ -835,14 +835,30 @@
         font-size: 1.5rem;
       }
       
+      .header-actions {
+        width: 100%;
+        justify-content: stretch;
+      }
+      
+      .header-actions .btn {
+        flex: 1;
+        font-size: 0.85rem;
+        padding: 0.6rem 0.75rem;
+      }
+      
+      .search-bar {
+        margin: 0.75rem 0;
+      }
+      
       .week-grid {
-        grid-template-columns: 60px 1fr;
-        font-size: 0.8rem;
+        grid-template-columns: 50px 1fr;
+        font-size: 0.75rem;
       }
       
       .time-slot {
         height: 50px;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
+        padding: 0.25rem;
       }
       
       .hour-line {
@@ -850,20 +866,40 @@
       }
       
       .session-block {
-        font-size: 0.75rem;
-        padding: 0.35rem;
+        font-size: 0.7rem;
+        padding: 0.25rem;
+        left: 2px;
+        right: 2px;
       }
       
       .session-name {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+        line-height: 1.2;
+        margin-bottom: 0.15rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
       }
       
       .session-time {
         font-size: 0.65rem;
+        line-height: 1.1;
+      }
+      
+      .session-icon {
+        font-size: 0.9em;
+      }
+      
+      .week-header {
+        padding: 0.75rem 0.25rem;
+        font-size: 0.8rem;
       }
       
       .month-grid {
-        gap: 2px;
+        gap: 1px;
+        font-size: 0.75rem;
       }
       
       .month-day {
@@ -872,14 +908,121 @@
         padding: 0.25rem;
       }
       
+      .month-day-header {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8rem;
+      }
+      
+      .month-day-number {
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+      }
+      
+      .month-event {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.3rem;
+        margin-top: 0.2rem;
+      }
+      
+      .month-day-indicator {
+        width: 6px;
+        height: 6px;
+        margin: 1px;
+      }
+      
+      .month-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+      }
+      
+      .month-title {
+        font-size: 1.3rem;
+      }
+      
+      .month-nav {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .month-nav .btn {
+        flex: 1;
+        padding: 0.5rem;
+        font-size: 0.8rem;
+      }
+      
       .stats-view {
         grid-template-columns: 1fr;
+      }
+      
+      .stat-card {
+        padding: 1rem;
+      }
+      
+      .stat-value {
+        font-size: 2rem;
+      }
+      
+      .list-item {
+        padding: 0.75rem;
+      }
+      
+      .list-item-title {
+        font-size: 1rem;
+      }
+      
+      .list-item-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+      }
+      
+      .tabs {
+        gap: 0.25rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .tab {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        flex-shrink: 0;
       }
       
       .modal {
         margin: 0;
         border-radius: 0;
         max-height: 100vh;
+        max-width: 100%;
+      }
+      
+      .modal-body {
+        padding: 1rem;
+      }
+      
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .side-panel {
+        width: 100%;
+        max-width: 100vw;
+      }
+      
+      .activity-type-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+      
+      .activity-type-card {
+        padding: 1rem 0.5rem;
+      }
+      
+      .activity-type-icon {
+        font-size: 2rem;
+      }
+      
+      .activity-type-label {
+        font-size: 0.85rem;
       }
     }
     
@@ -1184,6 +1327,28 @@
       }
       
       return activity.title || 'Actividad';
+    }
+    
+    // Abreviar nombre de materia para móvil
+    function shortenCourseName(name, maxLength = 25) {
+      if (!name) return '';
+      if (name.length <= maxLength) return name;
+      
+      // Intentar abreviar palabras largas
+      const words = name.split(' ');
+      if (words.length > 1) {
+        // Si tiene múltiples palabras, tomar primeras letras
+        return words.map((w, i) => {
+          // Mantener primera palabra completa si es corta
+          if (i === 0 && w.length <= 12) return w;
+          // Abreviar palabras largas
+          if (w.length > 8) return w.substring(0, 3) + '.';
+          return w;
+        }).join(' ').substring(0, maxLength);
+      }
+      
+      // Una sola palabra larga, truncar
+      return name.substring(0, maxLength - 2) + '..';
     }
 
     function getDaysInMonth(year, month) {
@@ -1863,11 +2028,13 @@
                         }}
                         onClick={() => onOpenItem(course, 'course')}
                       >
-                        <div className="session-name">{course?.nombre}</div>
+                        <div className="session-name" title={course?.nombre}>
+                          {isMobile ? shortenCourseName(course?.nombre, 20) : course?.nombre}
+                        </div>
                         <div className="session-time">
                           {formatTime(session.startTime)} - {formatTime(session.endTime)}
                         </div>
-                        {session.aula && <div className="session-time">{session.aula}</div>}
+                        {!isMobile && session.aula && <div className="session-time">{session.aula}</div>}
                       </div>
                     );
                   })}
